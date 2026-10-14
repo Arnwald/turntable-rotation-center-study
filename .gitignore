@@ -1,0 +1,12 @@
+__pycache__/
+.pytest_cache/
+results/cache/
+results/study.npz
+results/*.log
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
