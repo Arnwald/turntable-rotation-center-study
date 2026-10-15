@@ -99,62 +99,102 @@ def _bracket(phis, phi):
     return [(lo, 1.0 - u), (hi, u)]
 
 
-def correct_plane(samples: list[Sample], offsets: PlaneOffsets, fs: float):
-    """Corrected IR for every sample (``None`` where it stands as it is: 0 degrees, no offset)."""
-    out = [None] * len(samples)
-    if offsets.is_identity() or fs <= 0:
-        return out
+def plan_correction(angles, offsets: PlaneOffsets, mirrored=None, present=None):
+    """The correction as weights: ``{i: [(j, u, g, delay_s), ...]}``, meaning that the corrected
+    response at ``angles[i]`` is ``sum u * g * h_j(t - delay_s)`` over measured responses ``h_j``:
+    ``u`` the interpolation weights (they sum to 1), ``g = rho_j / rho*`` the gain and ``delay_s``
+    the delay that move ``h_j`` to the intended distance.
+
+    ``mirrored[j]``: ``h_j`` is a copy made by symmetry from the measurement at ``-angles[j]``;
+    ``present[j]``: there is a measurement at ``angles[j]``. Angles that stand as they are (0
+    degrees, no offset, no data) are left out.
+    """
+    n = len(angles)
+    mirrored = [False] * n if mirrored is None else list(mirrored)
+    present = [True] * n if present is None else list(present)
+    if offsets.is_identity():
+        return {}
     g = PlaneGeometry(offsets)
 
     supports = []
-    for s in samples:
-        if len(s.ir) == 0:
+    for j, angle in enumerate(angles):
+        if not present[j]:
             continue
-        if s.mirrored:
-            phi, dist = g.measured(-s.angle_deg)
+        if mirrored[j]:
+            phi, dist = g.measured(-angle)
             phi = -phi
         else:
-            phi, dist = g.measured(s.angle_deg)
-        supports.append((phi, dist, s.ir))
+            phi, dist = g.measured(angle)
+        supports.append((phi, dist, j))
     if len(supports) < 2:
-        return out
+        return {}
     supports.sort(key=lambda s: s[0])
 
     gaps = [b[0] - a[0] for a, b in zip(supports, supports[1:])]
     span = supports[-1][0] - supports[0][0]
     if len(supports) >= 3 and span >= 2.0 * math.pi - 1.5 * max(gaps):
-        wrapped = [(p - 2.0 * math.pi, d, ir) for p, d, ir in supports]
+        wrapped = [(p - 2.0 * math.pi, d, j) for p, d, j in supports]
         wrapped += supports
-        wrapped += [(p + 2.0 * math.pi, d, ir) for p, d, ir in supports]
+        wrapped += [(p + 2.0 * math.pi, d, j) for p, d, j in supports]
         supports = sorted(wrapped, key=lambda s: s[0])
     phis = np.array([s[0] for s in supports])
 
-    plans = []
-    for i, s in enumerate(samples):
-        if len(s.ir) == 0 or abs(s.angle_deg) <= 1e-9:
+    plans = {}
+    for i, angle in enumerate(angles):
+        if not present[i] or abs(angle) <= 1e-9:
             continue
-        phi, dist = g.ideal(s.angle_deg)
-        parts = [(k, u * supports[k][1] / dist, (dist - supports[k][1]) / C * fs)
-                 for k, u in _bracket(phis, phi)]
-        plans.append((i, len(s.ir), parts))
+        phi, dist = g.ideal(angle)
+        plans[i] = [(supports[k][2], u, supports[k][1] / dist, (dist - supports[k][1]) / C)
+                    for k, u in _bracket(phis, phi)]
+    return plans
+
+
+def correct_plane(samples: list[Sample], offsets: PlaneOffsets, fs: float):
+    """Corrected IR for every sample (``None`` where it stands as it is: 0 degrees, no offset)."""
+    out = [None] * len(samples)
+    if offsets.is_identity() or fs <= 0:
+        return out
+    plans = plan_correction([s.angle_deg for s in samples], offsets,
+                            [s.mirrored for s in samples], [len(s.ir) > 0 for s in samples])
     if not plans:
         return out
 
-    max_len = max(len(s[2]) for s in supports)
-    max_shift = max(abs(d) for _, _, parts in plans for _, _, d in parts)
+    max_len = max(len(s.ir) for s in samples)
+    max_shift = max(abs(d) * fs for parts in plans.values() for _, _, _, d in parts)
     pre = int(math.ceil(max_shift)) + 1
     n = 1 << int(math.ceil(math.log2(max_len + 2 * pre + 64)))
     bins = np.arange(n, dtype=float)
     signed = np.where(bins <= n // 2, bins, bins - n)
 
-    for index, own_len, parts in plans:
+    for index, parts in plans.items():
         acc = np.zeros(n, complex)
-        out_len = own_len
-        for k, gain, delay in parts:
-            ir = supports[k][2]
+        out_len = len(samples[index].ir)
+        for j, u, g, delay_s in parts:
+            ir = samples[j].ir
+            delay = delay_s * fs
             spectrum = np.fft.fft(ir, n)
-            acc += spectrum * np.exp(-2j * np.pi * signed * (delay + pre) / n) * gain
+            acc += spectrum * np.exp(-2j * np.pi * signed * (delay + pre) / n) * u * g
             out_len = max(out_len, int(math.ceil(len(ir) + max(delay, 0.0))))
         ir = np.fft.ifft(acc).real
         out[index] = ir[pre : pre + min(out_len, n - pre)]
+    return out
+
+
+def correct_spectra(spectra, angles, offsets: PlaneOffsets, freqs, mirrored=None, levels: bool = False):
+    """The same correction on complex spectra (rows: ``angles``) at any frequencies ``freqs`` (Hz):
+    each delay is the exact phase ``exp(-j 2 pi f delay)``. Rows that stand as they are are copied.
+
+    ``levels``: interpolate the re-propagated powers instead of the complex responses,
+    ``|H*|^2 = sum u_k |g_k H_k|^2`` (``g_k = rho_k / rho*``), keeping the phase of the complex
+    interpolation. Where the two measurements that bracket a direction are not coherent (an
+    interference pattern finer than the angular step), their complex mean cancels in part; the
+    mean of their powers does not."""
+    spectra = np.asarray(spectra, complex)
+    freqs = np.asarray(freqs, float)
+    out = spectra.copy()
+    for i, parts in plan_correction(angles, offsets, mirrored).items():
+        moved = [(u, g * np.exp(-2j * np.pi * freqs * delay) * spectra[j]) for j, u, g, delay in parts]
+        out[i] = sum(u * h for u, h in moved)
+        if levels and len(moved) > 1:
+            out[i] = np.sqrt(sum(u * np.abs(h) ** 2 for u, h in moved)) * np.exp(1j * np.angle(out[i]))
     return out

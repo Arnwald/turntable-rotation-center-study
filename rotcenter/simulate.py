@@ -16,14 +16,19 @@ CACHE = Path(__file__).resolve().parent.parent / "results" / "cache"
 
 
 class Loudspeaker:
-    """The three drivers in the cabinet, with or without edge diffraction."""
+    """The three drivers in the cabinet, with or without edge diffraction.
 
-    def __init__(self, n_fft: int = N_FFT, fs: float = FS, edge_step: float = 0.002):
+    ``freqs`` and ``drivers`` replace the default rfft grid and the three-way's drivers (the
+    two-way variant is evaluated at the frequencies of the boundary-element data); the impulse
+    responses need the rfft grid."""
+
+    def __init__(self, n_fft: int = N_FFT, fs: float = FS, edge_step: float = 0.002, freqs=None, drivers=None):
         self.n_fft = n_fft
         self.fs = fs
-        self.freqs = rfft_freqs(n_fft, fs)
+        self.freqs = rfft_freqs(n_fft, fs) if freqs is None else np.asarray(freqs, float)
+        self.custom_grid = freqs is not None
         self.k = 2.0 * np.pi * self.freqs / C
-        self.drivers = build_drivers(self.freqs)
+        self.drivers = build_drivers(self.freqs) if drivers is None else drivers
         self.edge_points = front_edges(step=edge_step)[0]
         self.edges = {name: self._edges(d, edge_step) for name, d in self.drivers.items()}
 
@@ -32,6 +37,10 @@ class Loudspeaker:
         r = driver.radiator
         key = (f"v1-{driver.name}-{r.radius}-{r.height}-{driver.placement}-{step}-{self.n_fft}-{self.fs}-"
                f"{np.abs(driver.response).sum():.9e}")
+        if r.profile is not None:
+            key += f"-{r.profile}"
+        if self.custom_grid:
+            key += f"-{hashlib.sha1(self.freqs.tobytes()).hexdigest()}"
         path = CACHE / f"edges-{driver.name}-{hashlib.sha1(key.encode()).hexdigest()[:10]}.npz"
         if path.exists():
             data = np.load(path)
@@ -65,4 +74,6 @@ class Loudspeaker:
 
     def impulse_responses(self, spectra: np.ndarray) -> np.ndarray:
         """Real impulse responses (last axis = time) from rfft spectra."""
+        if self.custom_grid:
+            raise ValueError("impulse responses need the rfft grid")
         return np.fft.irfft(spectra, self.n_fft, axis=-1)

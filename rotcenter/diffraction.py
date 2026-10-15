@@ -79,11 +79,7 @@ class EdgeDiffraction:
         x, wx = np.polynomial.legendre.leggauss(n_r)
         r = 0.5 * a * (x + 1.0)
         wr = 0.5 * a * wx
-        if radiator.is_piston:
-            z = np.zeros_like(r)
-        else:
-            sphere = (a**2 + radiator.height**2) / (2.0 * radiator.height)
-            z = np.sqrt(sphere**2 - r**2) - (sphere - radiator.height)
+        z = radiator.surface(r)
         phi = (np.arange(n_phi) + 0.5) * np.pi / n_phi
         rr, pp = np.meshgrid(r, phi, indexing="ij")
         zz = np.broadcast_to(z[:, None], rr.shape)

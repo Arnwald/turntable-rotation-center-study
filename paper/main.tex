@@ -22,6 +22,7 @@
 \sisetup{detect-all, per-mode=symbol}
 \graphicspath{{figures/}}
 \input{tables/numbers}
+\input{tables/bem_numbers}
 \makeatletter
 \newcommand{\rows}[1]{\@@input tables/#1.tex }
 \makeatother
@@ -31,7 +32,7 @@
 \newcommand{\jj}{\mathrm{j}}
 
 \title{Polar Measurements on a Small Turntable:\\How Well Can the Rotation Center Be Corrected?\\[4pt]
-\large A free-field simulation study of a horizontal three-way monitor}
+\large A free-field simulation study of a horizontal three-way monitor,\\with a boundary-element check}
 \author{}
 \date{Technical report --- simulation code and data:\\
 \url{https://github.com/Arnwald/turntable-rotation-center-study}}
@@ -56,7 +57,13 @@ $10^\circ$ steps at 1\,m and 2\,m. Without diffraction the correction is essenti
 frequencies. The Predicted In-Room Response computed from the corrected data stays within
 \pirCorOne\,dB (1\,m) and \pirCorTwo\,dB (2\,m) of the rigorous one, instead of \pirRawOne\,dB and
 \pirRawTwo\,dB uncorrected. The lateral offset of the microphone is essential: omitting it or
-entering it with the wrong sign does more harm than not correcting at all.
+entering it with the wrong sign does more harm than not correcting at all. A boundary-element
+solution of a two-way variant in the same cabinet, with extended rigid radiators and the whole
+cabinet, confirms these results below about 3\,kHz but shows more diffraction above: the rigid dome
+tweeter radiates wider than its aperture model, the far edge of the baffle adds fine interference
+ripples, and the corrected PIR then deviates by up to \bemPirCorOne\,dB in narrow bands at 1\,m
+(\bemPirCorTwo\,dB at 2\,m). $5^\circ$ steps, and interpolating levels rather than complex responses,
+bring it to \bemPirLevFiveOne\,dB.
 \end{abstract}
 
 \tableofcontents
@@ -140,6 +147,7 @@ baffle normal through $\vect R$. The microphone is placed on that axis, at the h
 \end{table}
 
 \subsection{Driver responses from the datasheets}
+\label{sec:datasheets}
 
 Each driver is described by its on-axis half-space response $H_i(f)$: complex pressure at
 $r_\text{ref}=1$\,m for 2.83\,V, in an infinite baffle. The SPL curves $L_i(f)$ of the three
@@ -195,6 +203,7 @@ Figure~\ref{fig:models} compares models and datasheets.
 \end{figure}
 
 \subsection{Radiators}
+\label{sec:radiators}
 
 The directivities are the classical far-field ones \cite{beranek}, normalized to 1 on the driver's
 own axis ($\theta$ is the angle from that axis, $k=2\pi f/c$, $c=343$\,m/s).
@@ -292,6 +301,7 @@ $P_\text{dir}+P_\text{edge}$ is at $-5.97$\,dB at 20\,Hz for all three drivers, 
 \end{figure}
 
 \subsection{An illustrative three-way crossover}
+\label{sec:crossover}
 
 To look at the summed loudspeaker, each driver is equalized to an acoustic target on the reference
 axis at 1\,m (rigorous setup):
@@ -697,6 +707,7 @@ the directivity index within 0.11\,dB.
 \end{table}
 
 \subsection{Wrong parameters and the laterally shifted microphone}
+\label{sec:variants}
 
 The correction needs the geometry it is given (Figure~\ref{fig:sensitivity}, Table~\ref{tab:variants}).
 Errors of $\pm10$\,mm on the depth or the lateral offset, or of 20\,mm on the microphone distance,
@@ -745,6 +756,327 @@ woofer being crossed over at 450\,Hz where its directivity varies slowly.
 \end{table}
 
 % =============================================================================================
+\section{A boundary-element check}
+\label{sec:bem}
+
+Two parts of the model are approximations, and both matter most where the residual of the correction
+lives: the drivers radiate as points with a far-field directivity, and the DED model represents the
+cabinet by dipoles along the front edges only, which describes the field behind the cabinet least
+well. This section repeats the study on a variant of the loudspeaker computed with the
+boundary-element method (BEM), which solves the radiation of the whole cabinet --- every face and
+edge, the drivers as extended rigid surfaces --- with neither approximation, from 20\,Hz to 16\,kHz.
+
+\subsection{A two-way variant}
+
+The BEM model is a two-way in the same cabinet (Figure~\ref{fig:bemmodel}): the SIG225-4 woofer at
+$x=-85$\,mm and the SICA tweeter at $x=+120$\,mm, both at mid-height ($y=0$). Dropping the midrange
+removes a source and, with both drivers on the cabinet's horizontal middle plane, makes the problem
+symmetric about the plane of the horizontal orbit, which halves it. The reference point is the
+tweeter center and the microphone is at its height: both drivers lie in the plane of rotation. The
+correction's parameters are those of the three-way: depth 145\,mm, lateral offset $+120$\,mm, woofer
+offset $-205$\,mm, tweeter offset 0.
+
+The radiators are rigid and move along their axis: the woofer is a recessed cone of radius
+$a=\sqrt{S_d/\pi}=83.8$\,mm, 35\,mm deep at $r=30$\,mm and 40\,mm at the center (the dust cap), the
+tweeter the dome of Section~\ref{sec:radiators} (28\,mm, 7.5\,mm high), both rims flush with the
+baffle.
+
+\begin{figure}[htbp]
+  \centering
+  \includegraphics[width=\textwidth]{bem_model.pdf}
+  \caption{The two-way variant solved by the BEM: same cabinet, woofer and tweeter on its horizontal
+  middle plane, which is the plane of the horizontal orbit and a plane of symmetry.}
+  \label{fig:bemmodel}
+\end{figure}
+
+\paragraph{Drivers.} For each driver moving with a volume velocity of 1\,m$^3$/s, the BEM gives the
+complex pressure $Z_i(\vect M,f)$ at any point $\vect M$ (Pa per m$^3$/s). The volume velocity comes
+from the datasheet response of Section~\ref{sec:datasheets} (the woofer in its 24\,L box):
+\begin{equation}
+  p_i(\vect M,f)=U_i(f)\,Z_i(\vect M,f),\qquad U_i(f)=\frac{H_i(f)}{q_i(f)},\qquad
+  q_i(f)=\frac{\jj\omega\rho_0}{2\pi r_\text{ref}}\,A_i(0,k),
+\end{equation}
+where $q_i$ is the on-axis far-field pressure of the same radiator in an infinite baffle per unit
+volume velocity, according to the aperture model of Eq.~\eqref{eq:dome} (with the cone's profile
+$z(r)<0$ for the woofer). Were that model exact, $p_i$ would be $H_i\,D_i(\theta,k)\,(r_\text{ref}/r)\,
+e^{-\jj kr}$ in an infinite baffle, the direct term of Eq.~\eqref{eq:ded}: the BEM and the DED model of
+this two-way share the same drivers and differ only by how they radiate and diffract. The DED model
+is evaluated with the cone's profile too.
+
+\paragraph{Crossover.} Fourth-order Linkwitz--Riley at 2\,kHz, the woofer high-passed at 40\,Hz, the
+filters designed as in Section~\ref{sec:crossover} from the BEM's on-axis responses at 1\,m: the
+target times the minimum-phase inverse of each driver's 1/6-octave smoothed magnitude. The same
+filters serve both models.
+
+\subsection{The boundary-element solution}
+
+The BEM data were computed with Huygens, a boundary-element solver under development whose code is not
+public; the pressures at every microphone position are in the repository
+(\texttt{data/bem/two\_way.npz}), with the scripts that turn them into the results below. The method:
+\begin{itemize}
+  \item exterior Neumann problem of the Helmholtz equation around the closed cabinet, rigid, each
+  driver's surface moving along its axis, the other one at rest (one right-hand side per driver);
+  \item Burton--Miller formulation \cite{burtonmiller} (the direct integral equation combined with its
+  normal derivative, coupling $\alpha=-\jj/k$ for the time factor $e^{+\jj\omega t}$), so that no
+  frequency falls on an interior resonance of the box; Galerkin discretization, pressure piecewise
+  linear and normal derivative piecewise constant on flat triangles, hypersingular operator in Maue's
+  weak form, singular integrals by the Sauter--Schwab transformations \cite{sauter};
+  \item uniform mesh of the whole surface, edges of $\lambda/6$ at the top of each band of frequencies
+  (bands of a ratio 1.26 in edge length), 50\,mm at most; the half model and its mirror image;
+  \item assembly with the near and singular pairs of triangles in double precision on the processor and
+  the distant pairs in single precision on the GPU; dense LU factorization in double precision.
+\end{itemize}
+The \bemFreqs\ frequencies run from 20\,Hz to 16\,kHz in 1/48-octave steps. At 16\,kHz the surface has
+\bemTrianglesMax\ triangles and the half model \bemUnknownsMax\ unknowns (\bemGigabytesMax\,GB,
+\bemSecondsTop\,s per frequency). The microphone positions are those of the study: the horizontal
+orbits of both setups and the vertical orbit of the rigorous setup, at 1\,m and 2\,m, every $5^\circ$
+(432 points). The sweep took \bemHours\,h on a Mac mini (Apple M4~Pro, 64\,GB), 62\,\% of it in the top
+band.
+
+Two checks on the data. At 20\,Hz, on the 2\,m circle, each driver radiates the pressure of a monopole
+of the same volume velocity, $\omega\rho_0 U/(4\pi r)$, to within $\pm7$\,\%, a variation explained below.
+Where the mesh changes (by 1.26 in edge length) the levels at the relevant points of the horizontal
+orbits move by 0.1 to 0.5\,dB RMS, about as much as from one frequency to the next within a band: the
+mesh is fine enough for the comparisons that follow.
+
+All the results of this section are computed at the BEM frequencies for both models, and the power
+spectra are smoothed to 1/24 octave as before (on this grid, the mean of three neighboring
+frequencies). The evaluation bands are 50\,Hz--4\,kHz for the woofer, 1--16\,kHz for the tweeter and
+50\,Hz--16\,kHz for the sum.
+
+\subsection{What the DED model misses}
+
+\paragraph{The low-frequency acoustic center lies ahead of the baffle.} At 50\,Hz the BEM level at
+$0^\circ$ exceeds the level at $180^\circ$ by 2.3\,dB at 1\,m and 1.2\,dB at 2\,m: a monopole about
+130\,mm in front of the baffle, at both distances --- the low-frequency acoustic center described by
+Vanderkooy \cite{vanderkooy2010}. The DED model puts it about 40 to 60\,mm ahead. It is the variation of
+the 20\,Hz check above.
+
+\paragraph{Baffle step.} On the reference axis the BEM woofer rises 4.5\,dB above its half-space level
+around 1\,kHz, the DED model 2\,dB (Figure~\ref{fig:bemonaxis}).
+
+\paragraph{The dome radiates wider.} The rigid dome of the BEM is much wider than the aperture model of
+Eq.~\eqref{eq:dome}: on the tweeter side of the orbit its response falls by 6\,dB at $95^\circ$ at
+6.35\,kHz (DED: $75^\circ$), at $80^\circ$ at 10\,kHz ($55^\circ$) and at $50^\circ$ at 16\,kHz ($35^\circ$),
+and its on-axis level is 2 to 3\,dB lower above 6\,kHz for the same volume velocity
+(Figures~\ref{fig:bemonaxis} and~\ref{fig:bempolars}). The aperture model lets each ring of the cap
+radiate as if it lay in a plane baffle; the protruding cap radiates sideways. With the drivers' volume
+velocities taken from that model, the BEM tweeter therefore sits 2 to 3\,dB below its datasheet on axis
+above 6\,kHz; the crossover's equalization absorbs it.
+
+\paragraph{Stronger diffraction.} More sound reaches the edges, and the BEM's polar patterns carry
+interference ripples that the DED model hardly shows. On the woofer side of the front quadrant
+($-70^\circ$ to $-20^\circ$) the ripple has a period of about $25^\circ$ at 3\,kHz and $10^\circ$ at
+6.35\,kHz, with $\pm1$ to 3\,dB: a secondary source some 330\,mm from the tweeter, the far edge of the
+baffle (Figure~\ref{fig:bempolars}). Behind the cabinet the patterns are finer still. Directivity aside
+(levels referred to $0^\circ$, Figure~\ref{fig:bemmaps}, Table~\ref{tab:dedvsbem}), the two models differ by
+\dvbTwFrontOne\,dB RMS in front of the tweeter and \dvbTwRearOne\,dB behind it at 1\,m.
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{bem_onaxis.pdf}
+  \caption{Each driver at $0^\circ$ (the tweeter's axis), BEM and DED, referred to the same driver in an
+  infinite baffle according to the aperture model: the cabinet effect, plus for the BEM the difference
+  between the rigid dome and its aperture model above a few kHz. At low frequency the BEM's acoustic center,
+  130\,mm ahead of the baffle, raises the level at $0^\circ$.}
+  \label{fig:bemonaxis}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{bem_vs_ded_maps_1m.pdf}
+  \caption{Left: BEM polar maps of the two drivers at 1\,m ($5^\circ$ steps), levels re $0^\circ$. Right:
+  the DED model's directivity minus the BEM's.}
+  \label{fig:bemmaps}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{bem_polars_1m.pdf}
+  \caption{Tweeter at 1\,m, level re $0^\circ$ against angle at 3, 6.35 and 10\,kHz. Top: BEM and DED.
+  Bottom: what the correction rebuilds from the centered measurements of the BEM, with $10^\circ$ and
+  $5^\circ$ steps. Negative angles are on the woofer's side.}
+  \label{fig:bempolars}
+\end{figure}
+
+\begin{table}[tbp]
+  \centering
+  \caption{DED against BEM, rigorous setup, levels referred to $0^\circ$: RMS and 95th percentile of the
+  difference over the relevant points, in front of the baffle ($|\theta|\le90^\circ$) and behind it (dB).}
+  \label{tab:dedvsbem}
+  \begin{tabular}{llcccc}
+    \toprule
+    & & \multicolumn{2}{c}{front} & \multicolumn{2}{c}{behind}\\
+    \cmidrule(lr){3-4}\cmidrule(lr){5-6}
+    $d$ & & RMS & P95 & RMS & P95\\
+    \midrule
+    \rows{bem_dedvsbem}
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{The correction on the BEM data}
+
+Table~\ref{tab:bemerrors} and Figures~\ref{fig:bemerrmaps} and~\ref{fig:bemresiduals} give the
+residuals; Table~\ref{tab:bemcta} the spatial averages.
+
+\paragraph{The woofer} is corrected as well as in the DED model of this two-way: \bemWfCorOne\,dB RMS at
+1\,m, \bemWfCorTwo\,dB at 2\,m. The low-frequency acoustic center ahead of the baffle does not get in
+the way: the spatial averages of the corrected data stay within 0.03\,dB of the rigorous ones up to
+1\,kHz.
+
+\paragraph{The tweeter and the summed loudspeaker} keep more than in the DED model: \bemTwCorOne\ and
+\bemSysCorOne\,dB RMS at 1\,m (DED: \dedTwCorOne\ and \dedSysCorOne\,dB), \bemTwCorTwo\ and
+\bemSysCorTwo\,dB at 2\,m. The residual sits where the BEM's patterns are finest: on the woofer's side,
+in front and behind, and directly behind the cabinet (Figure~\ref{fig:bemresiduals}). Three mechanisms
+add up:
+\begin{itemize}
+  \item \emph{Angular sampling.} $5^\circ$ steps bring the tweeter to \bemTwFiveOne\,dB RMS at 1\,m and
+  \bemTwFiveTwo\,dB at 2\,m, the sum to \bemSysFiveOne\ and \bemSysFiveTwo\,dB.
+  \item \emph{Interpolating complex responses.} Where the two measurements that bracket a direction are
+  no longer coherent --- the rear patterns at $10^\circ$ steps --- their complex mean cancels in part,
+  down to $-20$\,dB notches (Figure~\ref{fig:bempolars}, $-130^\circ$ around 6\,kHz). Interpolating the
+  re-propagated powers instead, $|\hat H|^2=\sum_k u_k\,|g_k H_k|^2$ with the phase of the complex
+  interpolation, avoids it: \bemTwLevOne\,dB RMS for the tweeter at 1\,m with $10^\circ$ steps,
+  \bemTwLevFiveOne\,dB with $5^\circ$ (Table~\ref{tab:bemerrors}). In the DED model it makes no
+  difference.
+  \item \emph{Secondary sources.} The far edge, 330\,mm from the tweeter, re-radiates the sound that
+  grazes the baffle; the correction moves that wave as if it came from the tweeter, so the ripple it
+  makes in front lands at the wrong angle. This part remains with $5^\circ$ steps: at 6.35\,kHz the
+  corrected response at $-30^\circ$ is 2.2\,dB low with $10^\circ$ steps, 1.1\,dB with $5^\circ$
+  (Figure~\ref{fig:bempolars}). It shrinks with distance.
+\end{itemize}
+
+\paragraph{Spatial averages.} Up to 3\,kHz the corrected CTA-2034-A curves remain within about 0.1\,dB of
+the rigorous ones, as in the DED model. Between 4 and 13\,kHz the residual concentrates in narrow bands:
+the PIR deviates by up to \bemPirCorOne\,dB at 1\,m and \bemPirCorTwo\,dB at 2\,m, the listening window by
+0.84 and 0.46\,dB (Figure~\ref{fig:bempir}, Table~\ref{tab:bemcta}); uncorrected, the PIR is
+\bemPirRawOne\ and \bemPirRawTwo\,dB off. With $5^\circ$ steps the PIR comes within \bemPirFiveOne\,dB
+(1\,m), with $5^\circ$ steps and interpolated levels within \bemPirLevFiveOne\,dB. With both orbits, as
+the standard measures them, the vertical orbit dilutes the horizontal residual: the PIR is within
+\bemPirBothCorOne\,dB at 1\,m and \bemPirBothCorTwo\,dB at 2\,m when only the horizontal orbit needs
+correcting (Table~\ref{tab:bemcta2}; the BEM was solved on the rigorous vertical orbit only). In the DED
+model, the vertical orbit measured with the loudspeaker on its side and corrected (depth 145\,mm, no
+lateral offset) gives a PIR within \dedPirBothCorOne\,dB, from \dedPirBothRawOne\,dB uncorrected.
+
+\paragraph{Parameters.} The conclusions of Section~\ref{sec:variants} stand (Table~\ref{tab:bemvariants}):
+an error of $\pm10$\,mm on the depth or on the lateral offset, or of 20\,mm on the distance, changes the
+PIR by less than 0.1\,dB; omitting the lateral offset, or giving it the wrong sign, puts the PIR
+\bemPirLatZeroOne\ or \bemPirLatSignOne\,dB off at 1\,m, worse than no correction (\bemPirRawOne\,dB).
+Crossed over at 2\,kHz instead of 450\,Hz, the woofer needs its own offset more than in the three-way:
+without it, \bemWfWfZeroOne\,dB RMS instead of \bemWfCorOne.
+
+\begin{table}[tbp]
+  \centering
+  \caption{Level error of the two-way, BEM and DED, horizontal orbit: uncorrected, corrected
+  ($10^\circ$ steps), corrected with interpolated levels ($10^\circ$), corrected with $5^\circ$ steps (dB,
+  over the relevant points).}
+  \label{tab:bemerrors}
+  \small
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{lllccccccccccc}
+    \toprule
+    & & & \multicolumn{3}{c}{uncorrected} & \multicolumn{3}{c}{corrected} & \multicolumn{2}{c}{levels}
+    & \multicolumn{2}{c}{$5^\circ$ steps}\\
+    \cmidrule(lr){4-6}\cmidrule(lr){7-9}\cmidrule(lr){10-11}\cmidrule(lr){12-13}
+    $d$ & model & & RMS & P95 & max & RMS & P95 & max & RMS & max & RMS & max\\
+    \midrule
+    \rows{bem_errors}
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=0.92\textwidth]{bem_error_maps_1m.pdf}
+  \caption{Level error of the BEM data at 1\,m, uncorrected (left) and corrected (right), $10^\circ$ steps.}
+  \label{fig:bemerrmaps}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{bem_residuals.pdf}
+  \caption{RMS level error of the corrected data at each angle: BEM with $10^\circ$ steps, with interpolated
+  levels, with $5^\circ$ steps, and the DED model of the same two-way. Negative angles are on the woofer's
+  side.}
+  \label{fig:bemresiduals}
+\end{figure}
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{bem_pir.pdf}
+  \caption{Listening window, PIR and sound power of the BEM two-way from the horizontal orbit, and their
+  differences with the rigorous case.}
+  \label{fig:bempir}
+\end{figure}
+
+\begin{table}[tbp]
+  \centering
+  \caption{Largest deviation from the rigorous case, 100\,Hz--16\,kHz, of the horizontal-orbit
+  CTA-2034-A curves of the two-way (dB).}
+  \label{tab:bemcta}
+  \begin{tabular}{lllccccc}
+    \toprule
+    $d$ & model & data & LW & ER & SP & PIR & DI\\
+    \midrule
+    \rows{bem_cta}
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[tbp]
+  \centering
+  \caption{The same with both orbits, as CTA-2034-A measures them (dB). BEM: the vertical orbit is the
+  rigorous one. DED: the vertical orbit is also measured with the cabinet centered, on its side, and
+  corrected.}
+  \label{tab:bemcta2}
+  \small
+  \begin{tabular}{llllcccccc}
+    \toprule
+    $d$ & model & horizontal & vertical & LW & ER & SP & PIR & SPDI & ERDI\\
+    \midrule
+    \rows{bem_cta2}
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[tbp]
+  \centering
+  \caption{RMS level error and largest PIR deviation of the BEM two-way for the correction variants (dB).}
+  \label{tab:bemvariants}
+  \small
+  \begin{tabular}{lcccc@{\hspace{12pt}}cccc}
+    \toprule
+    & \multicolumn{4}{c}{1\,m} & \multicolumn{4}{c}{2\,m}\\
+    \cmidrule(lr){2-5}\cmidrule(lr){6-9}
+    & woofer & tweeter & sum & PIR & woofer & tweeter & sum & PIR\\
+    \midrule
+    \rows{bem_variants}
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{The two-way's spinorama.} For reference, Figure~\ref{fig:bemspin} shows the CTA-2034-A curves
+of the BEM two-way from both orbits at 1\,m.
+
+\begin{figure}[tbp]
+  \centering
+  \includegraphics[width=\textwidth]{bem_spinorama.pdf}
+  \caption{CTA-2034-A curves of the BEM two-way, rigorous setup, both orbits at 1\,m.}
+  \label{fig:bemspin}
+\end{figure}
+
+\subsection{What changes}
+
+The BEM confirms what the correction does below about 3\,kHz, where the woofer and the crossover region
+are: the spatial averages of the corrected data match the rigorous ones within 0.1\,dB and the lateral
+offset is critical. Above, the rigid dome sends more sound to the cabinet's edges than the DED model
+assumes, the polar patterns carry finer interference ripples, and the correction leaves more: about
+1--2\,dB RMS on the tweeter's individual curves with $10^\circ$ steps, and up to about 0.6\,dB on the PIR
+in narrow bands at 1\,m (0.4\,dB at 2\,m). Finer steps and level interpolation recover most of it; the
+part due to the far edge remains, smaller at 2\,m.
+
+% =============================================================================================
 \section{Discussion}
 
 \paragraph{The geometry is the easy part.} For the direct sound of each driver the correction is
@@ -757,12 +1089,22 @@ edges, not from the driver; the correction re-times them as if they did. In this
 consequence is small in front of the loudspeaker and grows behind it, at mid and high frequencies,
 where the edge waves are the response. Spatial averages are barely affected: the PIR of the corrected
 data is within about 0.1\,dB of the rigorous one. Individual rear curves can show local deviations of a
-few dB in narrow bands.
+few dB in narrow bands. The boundary-element
+check (Section~\ref{sec:bem}) shows that the DED model underestimates that diffraction for a dome
+tweeter: the rigid dome radiates wider, more sound reaches the edges, and the residual grows above
+3\,kHz, in front on the side of the far edge as well as behind --- up to about 0.6\,dB on the PIR in
+narrow bands at 1\,m. Below 3\,kHz the BEM confirms the DED results.
 
 \paragraph{1\,m or 2\,m.} At 2\,m the raw errors are halved and the finite-distance part of the
 diffraction error shrinks, but the angular-interpolation part does not; a finer orbit
 ($5^\circ$) is then the effective remedy. In a real room the choice is also about the reflection-free
 time window, which shrinks with distance --- outside the scope of this free-field study.
+
+\paragraph{Interpolate levels.} Where the angular step undersamples the pattern, the two measurements
+that bracket a direction are not coherent and the linear interpolation of complex responses cancels in
+part, with artificial notches. Interpolating the re-propagated powers, keeping the phase of the complex
+interpolation, removes them; on the BEM data it halves the residual of the tweeter with $10^\circ$ steps
+and costs nothing where the data are well sampled.
 
 \paragraph{The lateral offset is the trap.} The model handles the laterally shifted microphone,
 provided the lateral offset is entered, with the right sign. A wrong or missing lateral offset is
@@ -775,14 +1117,18 @@ toward the tweeter at positive angles.
   \item Free field. The room, the gating window and its interaction with the correction (the delays
   change by up to 1\,ms behind the cabinet) are not simulated.
   \item The DED model is an approximation: only the edges of the front baffle are modelled, the field
-  behind the cabinet is the sum of the edge dipoles, and the edges are sharp. Real cabinets with
-  rounded edges diffract less, which should help the correction.
-  \item Rigid pistons and domes, acoustic centers on the baffle plane. A real acoustic center behind
-  or in front of the baffle acts like a depth error for that driver; $\pm10$\,mm of depth error costs
-  little here.
-  \item Only the horizontal orbit. The vertical orbit, with the loudspeaker on its side on the
-  turntable, follows the same geometry (with the driver offsets of that plane) and was not simulated;
-  the CTA-2034-A curves above are horizontal-orbit estimates.
+  behind the cabinet is the sum of the edge dipoles, and the edges are sharp. The boundary-element check
+  removes the first two approximations for a two-way variant and finds more diffraction above 3\,kHz.
+  Real cabinets with rounded edges diffract less, which should help the correction.
+  \item Rigid pistons, cones and domes. Real diaphragms break up at high frequency and real tweeters sit
+  in faceplates or waveguides, which change their directivity and how much sound reaches the edges.
+  The acoustic centers are on the baffle plane: a real acoustic center behind or in front of the baffle
+  acts like a depth error for that driver; $\pm10$\,mm of depth error costs little here, and the
+  low-frequency acoustic center, 130\,mm ahead of the baffle in the BEM, does not disturb the
+  correction.
+  \item The vertical orbit, measured with the loudspeaker on its side, was simulated for the two-way with
+  the DED model (depth 145\,mm, no lateral offset; Table~\ref{tab:bemcta2}), the BEM on the rigorous
+  vertical orbit only. The three-way's CTA-2034-A curves are horizontal-orbit estimates.
 \end{itemize}
 
 \begin{tcolorbox}[colback=gray!4,colframe=gray!45,title=Checklist for a small-turntable polar measurement,fonttitle=\bfseries\small,fontupper=\small]
@@ -794,9 +1140,11 @@ toward the tweeter at positive angles.
   lateral offset that sign.
   \item Give every driver its offset from the reference axis in the plane of rotation --- a woofer
   beside the tweeter in a horizontal cabinet is not at 0.
-  \item Use $5^\circ$ steps if the rear half matters at high frequency, particularly at 2\,m.
-  \item Treat rear responses at mid and high frequencies as approximate (cabinet diffraction);
-  spatial averages (sound power, PIR, DI) are robust.
+  \item Use $5^\circ$ steps if the responses above a few kHz matter, behind the cabinet and on the side
+  of the far edge, and interpolate levels rather than complex responses.
+  \item Treat rear responses at mid and high frequencies as approximate (cabinet diffraction). Spatial
+  averages (sound power, PIR, DI) are robust: within about 0.1\,dB below 3\,kHz, a few tenths of a dB
+  in narrow bands above.
 \end{enumerate}
 \end{tcolorbox}
 
@@ -809,9 +1157,12 @@ seen from the wrong direction, and the PIR is about 1\,dB low. A geometric corre
 point source with directivity, re-propagated and interpolated --- restores them: essentially exactly
 for the direct sound, and to within a few tenths of a dB RMS once the cabinet's edge diffraction is
 included, the residual being concentrated behind the cabinet at mid and high frequencies. The spatial
-averages of CTA-2034-A, PIR included, come within about 0.1\,dB of the rigorous ones. The method is only
-as good as its parameters, and one of them is critical: the lateral offset of the reference axis,
-with its sign.
+averages of CTA-2034-A, PIR included, come within about 0.1\,dB of the rigorous ones. A boundary-element
+solution of a two-way in the same cabinet confirms this below about 3\,kHz; above, the dome tweeter
+drives the cabinet's edges harder than the edge model assumes, and the corrected PIR deviates by up to
+about 0.6\,dB in narrow bands at 1\,m (0.4\,dB at 2\,m), 0.3\,dB with $5^\circ$ steps and interpolated
+levels. The method is only as good as its parameters, and one of them is critical: the lateral offset of
+the reference axis, with its sign.
 
 \appendix
 
@@ -836,15 +1187,27 @@ with its sign.
 \FloatBarrier
 \section{Reproducibility}
 
-Everything in this report is produced by the Python code of the repository (NumPy, SciPy, Matplotlib):
+Everything in this report is produced by the Python code of the repository (NumPy, SciPy, Matplotlib),
+from the boundary-element pressures for Section~\ref{sec:bem}:
 \begin{itemize}
   \item \texttt{rotcenter/}: geometry and kinematics, radiators, driver models, DED diffraction, the
-  correction, CTA-2034-A averages, crossover, metrics;
-  \item \texttt{scripts/run\_study.py}: all simulated measurements ($\approx$\,5\,min);
-  \item \texttt{scripts/make\_figures.py}, \texttt{scripts/make\_schematics.py}: figures and tables;
+  correction (time and frequency domains), CTA-2034-A averages (one or both orbits), crossovers,
+  metrics, the two-way variant;
+  \item \texttt{scripts/run\_study.py}: all simulated measurements of the three-way ($\approx$\,5\,min);
+  \item \texttt{data/bem/}: the BEM pressures of the two-way (\texttt{two\_way.npz}: each driver,
+  per unit volume velocity, at the 432 microphone positions of \texttt{points.json} and the \bemFreqs\
+  frequencies, with the mesh size and the time of each solve), and \texttt{scripts/import\_bem.py}, which
+  wrote it from the solver's report;
+  \item \texttt{scripts/run\_bem.py}: the two-way, BEM and DED, all cases ($\approx$\,30\,s);
+  \item \texttt{scripts/make\_figures.py} and \texttt{scripts/make\_bem\_figures.py}: figures and
+  tables;
+  \item \texttt{scripts/make\_schematics.py}: the schematics;
   \item \texttt{tests/}: unit tests (kinematics, directivities, DED normalization, correction of an
-  ideal point source).
+  ideal point source, time and frequency domains, crossovers, CTA-2034-A curves, the two-way's
+  microphone positions against the BEM data).
 \end{itemize}
+The boundary-element solver itself (Huygens) is not public.
+
 The datasheet curves (\texttt{data/datasheets/}) were extracted from the vector graphics of the
 manufacturers' PDF datasheets; they belong to their manufacturers and are used here for analysis only.
 
@@ -858,6 +1221,12 @@ Consumer Technology Association, 2015.
 \emph{J.\ Audio Eng.\ Soc.}, vol.~39, no.~12, pp.~923--933, 1991.
 \bibitem{beranek} L.~L.~Beranek, T.~J.~Mellow, \emph{Acoustics: Sound Fields and Transducers},
 Academic Press, 2012.
+\bibitem{sauter} S.~A.~Sauter, C.~Schwab, \emph{Boundary Element Methods}, Springer, 2011.
+\bibitem{vanderkooy2010} J.~Vanderkooy, ``The Low-Frequency Acoustic Center: Measurement, Theory, and
+Application,'' 128th Convention of the Audio Engineering Society, London, 2010.
+\bibitem{burtonmiller} A.~J.~Burton, G.~F.~Miller, ``The application of integral equation methods to the
+numerical solution of some exterior boundary-value problems,'' \emph{Proc.\ R.\ Soc.\ Lond.\ A},
+vol.~323, pp.~201--210, 1971.
 \end{thebibliography}
 
 \end{document}

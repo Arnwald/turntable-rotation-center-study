@@ -19,6 +19,11 @@ corner angle of the square bounded by the great circles at +-alpha horizontally 
 The weights are symmetric about 90 degrees and the 90-degree band is counted twice.
 
 All inputs are power spectra ``|p|^2`` keyed by the horizontal angle in degrees.
+
+:func:`cta2034` gives the curves of the standard from both orbits (horizontal and vertical, 10-degree
+steps, vertical angles positive upward): the listening window adds the +-10 degree vertical directions,
+the early reflections the floor (-20, -30, -40 degrees) and ceiling (40, 50, 60 degrees) bounces, the
+sound power weights all 70 directions.
 """
 
 from __future__ import annotations
@@ -31,6 +36,8 @@ LISTENING_WINDOW = (0, 10, -10, 20, -20, 30, -30)
 FRONT_WALL = (0, 10, -10, 20, -20, 30, -30)
 SIDE_WALL = (40, -40, 50, -50, 60, -60, 70, -70, 80, -80)
 REAR_WALL = (90, -90, 180)
+FLOOR = (-20, -30, -40)
+CEILING = (40, 50, 60)
 
 
 def _square_solid_angle(alpha_deg: float) -> float:
@@ -83,3 +90,27 @@ def horizontal_cta2034(power: dict) -> dict[str, np.ndarray]:
         di = 10.0 * np.log10(lw / sp)
     return {"on_axis": power[0], "lw": lw, "er_front": front, "er_side": side, "er_rear": rear,
             "er": er, "sp": sp, "pir": pir, "di": di}
+
+
+def _orbit(power: dict) -> dict:
+    out = {_fold(a): np.asarray(p, float) for a, p in power.items()}
+    if -180 in out and 180 not in out:
+        out[180] = out.pop(-180)
+    return out
+
+
+def cta2034(horizontal: dict, vertical: dict) -> dict[str, np.ndarray]:
+    """LW, ER (and its five bounces), SP, PIR as power spectra, SPDI = LW - SP and ERDI = LW - ER
+    in dB, from both orbits."""
+    h, v = _orbit(horizontal), _orbit(vertical)
+    lw = np.mean([h[0], v[10], v[-10]] + [h[a] for a in LISTENING_WINDOW if a], axis=0)
+    bounces = {"er_floor": _rms(v, FLOOR), "er_ceiling": _rms(v, CEILING), "er_front": _rms(h, FRONT_WALL),
+               "er_side": _rms(h, SIDE_WALL), "er_rear": _rms(h, REAR_WALL)}
+    er = np.mean(list(bounces.values()), axis=0)
+    directions = list(h.items()) + [(a, p) for a, p in v.items() if a not in (0, 180)]
+    weights = [SP_WEIGHTS[abs(a)] for a, _ in directions]
+    sp = sum(w * p for w, (_, p) in zip(weights, directions)) / sum(weights)
+    pir = 0.12 * lw + 0.44 * er + 0.44 * sp
+    with np.errstate(divide="ignore", invalid="ignore"):
+        spdi, erdi = 10.0 * np.log10(lw / sp), 10.0 * np.log10(lw / er)
+    return dict(on_axis=h[0], lw=lw, er=er, sp=sp, pir=pir, di=spdi, erdi=erdi, **bounces)

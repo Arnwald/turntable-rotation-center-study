@@ -11,6 +11,8 @@
 
   and ``D(theta) = A(theta, k) / A(0, k)``: unity on axis, complex off axis because the
   protruding center moves the apparent source. ``h = 0`` gives the flat piston.
+* Any other axisymmetric radiator (the recessed cone of the boundary-element model) is given by
+  its profile ``z(r)``, piecewise linear, negative below the rim plane, in the same integral.
 
 Both are normalized to 1 on their own axis; the on-axis response is the driver model's job.
 """
@@ -31,23 +33,32 @@ def piston(x):
 
 
 class Radiator:
-    """A piston (``height = 0``) or a dome, with Gauss-Legendre nodes over its radius."""
+    """A piston (``height = 0``), a dome, or a ``profile`` ``[(r, z), ...]`` (m, ``z`` from the rim
+    plane, negative when recessed), with Gauss-Legendre nodes over its radius."""
 
-    def __init__(self, radius: float, height: float = 0.0, nodes: int = 96):
+    def __init__(self, radius: float, height: float = 0.0, nodes: int = 96, profile=None):
         self.radius = float(radius)
         self.height = float(height)
+        self.profile = None if profile is None else tuple(sorted((float(r), float(z)) for r, z in profile))
         x, w = np.polynomial.legendre.leggauss(nodes)
         self.r = 0.5 * radius * (x + 1.0)
         self.w = 0.5 * radius * w
-        if height > 0.0:
-            sphere = (radius**2 + height**2) / (2.0 * height)
-            self.z = np.sqrt(sphere**2 - self.r**2) - (sphere - height)
-        else:
-            self.z = np.zeros_like(self.r)
+        self.z = self.surface(self.r)
+
+    def surface(self, r):
+        """Axial position ``z(r)`` of the radiating surface above the rim plane (m)."""
+        r = np.asarray(r, float)
+        if self.profile is not None:
+            rs, zs = zip(*self.profile)
+            return np.interp(r, rs, zs)
+        if self.height > 0.0:
+            sphere = (self.radius**2 + self.height**2) / (2.0 * self.height)
+            return np.sqrt(sphere**2 - r**2) - (sphere - self.height)
+        return np.zeros_like(r)
 
     @property
     def is_piston(self) -> bool:
-        return self.height <= 0.0
+        return not np.any(self.z)
 
     def aperture(self, k, theta):
         """Unnormalized far-field factor ``A(theta, k)``; ``k`` and ``theta`` broadcast."""
