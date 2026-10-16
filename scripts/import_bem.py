@@ -1,12 +1,13 @@
 """Convert the boundary-element solver's report into ``data/bem/two_way.npz``.
 
-Usage: ``python3 scripts/import_bem.py REPORT.json [OUT.npz]``
+Usage: ``python3 scripts/import_bem.py REPORT.json [OUT.npz [POINTS.json]]``
 
-The report (written by Huygens' ``huygens-bench turntable --points data/bem/points.json --out``)
-holds the frequencies, the microphone positions, one record per solved frequency (mesh size, time)
-and ``pressure[source][frequency][point] = [re, im]``: Pa for 1 m^3/s of volume velocity out of
-each driver, time factor ``exp(+j omega t)``. The sets of microphone positions are those of
-``data/bem/points.json``.
+The report (written by Huygens' ``huygens-bench turntable --points POINTS.json --out``) holds the
+frequencies, the microphone positions, one record per solved frequency (mesh size, time) and
+``pressure[source][frequency][point] = [re, im]``: Pa for 1 m^3/s of volume velocity out of each
+driver, time factor ``exp(+j omega t)``. The sets of microphone positions are those of the points
+file (``data/bem/points.json`` by default). The pressures are stored in single precision, far
+finer than the solution's own accuracy.
 """
 
 from __future__ import annotations
@@ -23,12 +24,13 @@ ROOT = Path(__file__).resolve().parent.parent
 def main():
     report_path = Path(sys.argv[1])
     out = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "data" / "bem" / "two_way.npz"
+    layout_path = Path(sys.argv[3]) if len(sys.argv) > 3 else ROOT / "data" / "bem" / "points.json"
     report = json.loads(report_path.read_text())
-    layout = json.loads((ROOT / "data" / "bem" / "points.json").read_text())
+    layout = json.loads(layout_path.read_text())
 
     points = np.array(report["points"], float)
-    if not np.allclose(points, np.array(layout["points"], float), atol=1e-12):
-        raise SystemExit("the report was not computed on data/bem/points.json")
+    if points.shape != np.shape(layout["points"]) or not np.allclose(points, layout["points"], atol=1e-12):
+        raise SystemExit(f"the report was not computed on {layout_path}")
     freqs = np.array(report["frequencies"], float)
     pressure = np.array(report["pressure"], float)
     pressure = pressure[..., 0] + 1j * pressure[..., 1]
@@ -51,7 +53,7 @@ def main():
         freqs=freqs,
         points=points,
         sources=np.array(report["sources"]),
-        pressure=pressure,
+        pressure=pressure.astype(np.complex64),
         angles=angles,
         set_names=np.array([s["name"] for s in layout["sets"]]),
         set_first=np.array([s["first"] for s in layout["sets"]]),

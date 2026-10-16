@@ -122,7 +122,7 @@ class BemData:
         self.freqs = d["freqs"]
         self.points = d["points"]
         self.sources = [str(s) for s in d["sources"]]
-        self.transfer = {name: d["pressure"][i] for i, name in enumerate(self.sources)}
+        self.transfer = {name: d["pressure"][i].astype(complex) for i, name in enumerate(self.sources)}
         self.angles = d["angles"]
         self.sets = {str(n): (int(f), float(dist)) for n, f, dist in zip(d["set_names"], d["set_first"],
                                                                           d["set_distance"])}
@@ -139,10 +139,10 @@ class BemData:
         return {n: velocities[n][None, :] * self.transfer[n][:, span].T for n in velocities}
 
 
-def orbit(spectra: dict, angles, step: int):
+def orbit(spectra: dict, angles, step: float):
     """The orbit every ``step`` degrees, from ``-180 + step`` to 180 (180 is the -180 point)."""
     angles = np.asarray(angles, float)
-    wanted = np.arange(-180 + step, 181, step)
+    wanted = -180.0 + step * np.arange(1, int(round(360.0 / step)) + 1)
     index = [int(np.flatnonzero(np.isclose(angles, a if a != 180 else -180.0))[0]) for a in wanted]
     return wanted, {n: s[index] for n, s in spectra.items()}
 

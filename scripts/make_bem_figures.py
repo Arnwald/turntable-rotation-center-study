@@ -30,6 +30,14 @@ DATA = np.load(sys.argv[1] if len(sys.argv) > 1 else ROOT / "results" / "bem.npz
 F = DATA["freqs"]
 ANG = DATA["angles"]
 ANG5 = DATA["angles5"]
+#: The orbits' angles by case suffix: 10, 5 and 2.5 degree steps.
+ANGLES = {suffix: DATA[f"angles{suffix}"] for suffix in ("", "5", "2") if f"angles{suffix}" in DATA.files}
+STEP_OF = {"": 10.0, "5": 5.0, "2": 2.5}
+SUFFIXES = [suffix for suffix in ("", "5", "2") if suffix in ANGLES]
+#: The distances of the data.
+TAGS = [tag for tag in ("1m", "2m", "4m") if f"bem/{tag}/rigorous/system/power" in DATA.files]
+#: Whether the BEM data have the vertical orbit measured with the cabinet on its side.
+BEM_VERTICAL = "bem/1m/v-corrected/system/power" in DATA.files
 DRIVERS = ("woofer", "tweeter")
 ALL = DRIVERS + ("system",)
 LABELS = {"woofer": "woofer", "tweeter": "tweeter", "system": "2-way sum"}
@@ -49,8 +57,23 @@ def get(model, tag, case, drv):
     return DATA[f"{model}/{tag}/{case}/{drv}/power"]
 
 
+def suffix_of(case):
+    return case[-1] if case[-1] in "52" else ""
+
+
 def angles_of(case):
-    return ANG5 if case.endswith("5") else ANG
+    return ANGLES[suffix_of(case)]
+
+
+def rigorous_of(case):
+    """The reference of a case: the rigorous data of its orbit and step."""
+    return ("v-" if case.startswith("v-") else "") + "rigorous" + suffix_of(case)
+
+
+def at_ten_degrees(p, case):
+    """``{angle: power}`` at the 10-degree angles of a case's orbit (the CTA-2034-A directions)."""
+    angles = angles_of(case)
+    return {int(round(a)): p[i] for i, a in enumerate(angles) if np.isclose(a, ANG).any()}
 
 
 def full_circle(rows, angles):
@@ -270,7 +293,7 @@ def fig_polars(tag="1m", name="tweeter"):
 def ded_vs_bem_numbers():
     """RMS of the DED - BEM level difference over the relevant points, front and rear halves."""
     out = {}
-    for tag in ("1m", "2m"):
+    for tag in TAGS:
         for name in ALL:
             ref = get("bem", tag, "rigorous5", name)
             ded = get("ded", tag, "rigorous5", name)
@@ -313,27 +336,30 @@ def fig_error_maps(tag):
 
 
 def fig_residuals():
-    fig, axes = plt.subplots(2, 3, figsize=(7.0, 3.7), sharex=True, sharey="row")
-    curves = (("bem", "corrected", "BEM, 10° steps", ps.SLOTS[0], "-"),
+    fig, axes = plt.subplots(len(TAGS), 3, figsize=(7.0, 1.85 * len(TAGS)), sharex=True, sharey="row",
+                             squeeze=False)
+    curves = [("bem", "corrected", "BEM, 10° steps", ps.SLOTS[0], "-"),
               ("bem", "levels", "BEM, 10° steps, levels interpolated", ps.SLOTS[3], "-."),
               ("bem", "corrected5", "BEM, 5° steps", ps.SLOTS[1], "--"),
-              ("ded", "corrected", "DED, 10° steps", ps.SLOTS[2], ":"))
-    for row, tag in enumerate(("1m", "2m")):
+              ("ded", "corrected", "DED, 10° steps", ps.SLOTS[2], ":")]
+    if "2" in ANGLES:
+        curves.insert(3, ("bem", "corrected2", "BEM, 2.5° steps", ps.SLOTS[6], (0, (1, 1))))
+    for row, tag in enumerate(TAGS):
         for col, name in enumerate(ALL):
             ax = axes[row, col]
             for model, case, label, color, ls in curves:
-                rig = "rigorous5" if case.endswith("5") else "rigorous"
                 angles = angles_of(case)
-                e = per_angle_rms(get(model, tag, case, name), get(model, tag, rig, name), F, angles, BANDS[name])
+                e = per_angle_rms(get(model, tag, case, name), get(model, tag, rigorous_of(case), name), F, angles,
+                                  BANDS[name])
                 a, e = full_circle(e, angles)
-                ax.plot(a, e, color=color, ls=ls, lw=1.1, marker="o", ms=1.8 if case.endswith("5") else 2.2,
+                ax.plot(a, e, color=color, ls=ls, lw=1.1, marker="o" if not suffix_of(case) else None, ms=2.2,
                         label=label)
             ax.set_xlim(-180, 180)
             ax.set_xticks(np.arange(-180, 181, 90))
             ax.set_title(f"{LABELS[name]}, {tag[0]} m", loc="left")
-            if row == 1:
+            if row == len(TAGS) - 1:
                 ax.set_xlabel("angle (°)")
-        axes[row, 0].set_ylabel("RMS level error (dB)")
+        axes[row, 0].set_ylabel("RMS error (dB)")
     fig.tight_layout(h_pad=0.6, w_pad=0.3)
     axes[0, 0].legend(loc="upper center", fontsize=6.0, handlelength=2.2)
     fig.savefig(FIG / "bem_residuals.pdf")
@@ -341,13 +367,13 @@ def fig_residuals():
 
 
 def cta_h(model, tag, case, name="system"):
-    p = get(model, tag, case, name)
-    return horizontal_cta2034({int(a): p[i] for i, a in enumerate(ANG)})
+    """Horizontal-orbit CTA-2034-A curves of a case (finer steps read at the 10-degree angles)."""
+    return horizontal_cta2034(at_ten_degrees(get(model, tag, case, name), case))
 
 
 def cta_hv(model, tag, h_case, v_case, name="system"):
-    ph, pv = get(model, tag, h_case, name), get(model, tag, v_case, name)
-    return cta2034({int(a): ph[i] for i, a in enumerate(ANG)}, {int(a): pv[i] for i, a in enumerate(ANG)})
+    return cta2034(at_ten_degrees(get(model, tag, h_case, name), h_case),
+                   at_ten_degrees(get(model, tag, v_case, name), v_case))
 
 
 def deviation(c, ref, key):
@@ -428,6 +454,8 @@ VARIANT_LABELS = {
     "corrected5": "true parameters, 5° steps",
     "levels": "levels interpolated",
     "levels5": "levels interpolated, 5° steps",
+    "corrected2": "true parameters, 2.5° steps",
+    "levels2": "levels interpolated, 2.5° steps",
     "lateral_omitted": "lateral offset omitted (0)",
     "lateral_sign": "lateral offset, wrong sign",
     "woofer_offset_omitted": "woofer offset omitted (0)",
@@ -440,32 +468,80 @@ VARIANT_LABELS = {
 
 
 def error_summary(model, tag, case, name):
-    rig = "rigorous5" if case.endswith("5") else "rigorous"
-    return summary(get(model, tag, case, name), get(model, tag, rig, name), F, angles_of(case), BANDS[name])
+    return summary(get(model, tag, case, name), get(model, tag, rigorous_of(case), name), F, angles_of(case),
+                   BANDS[name])
 
 
 def variant_numbers(model="bem"):
     out = {}
-    for tag in ("1m", "2m"):
+    for tag in TAGS:
         ref = cta_h(model, tag, "rigorous")
         for v in VARIANT_LABELS:
+            if f"{model}/{tag}/{v}/system/power" not in DATA.files:
+                continue
             row = {name: error_summary(model, tag, v, name) for name in ALL}
-            if v.endswith("5"):
-                # The 5-degree correction, read at the 10-degree angles for the CTA-2034-A curves.
-                keep = np.isin(ANG5, ANG)
-                p = get(model, tag, v, "system")[keep]
-                c = horizontal_cta2034({int(a): p[i] for i, a in enumerate(ANG5[keep])})
-            else:
-                c = cta_h(model, tag, v)
-            row["pir"] = deviation(c, ref, "pir")
+            row["pir"] = deviation(cta_h(model, tag, v), ref, "pir")
             out[(tag, v)] = row
     return out
 
 
-def tables(numbers, ded_numbers, dvb):
+TAG_WORD = {"1m": "One", "2m": "Two", "4m": "Four"}
+SUFFIX_WORD = {"": "", "5": "Five", "2": "Fine"}
+
+
+def convergence_numbers():
+    """RMS level error of the corrected sum and tweeter, and the largest PIR deviation, for each
+    angular step, distance and interpolation."""
+    out = {}
+    for model in MODELS:
+        for tag in TAGS:
+            ref = cta_h(model, tag, "rigorous")
+            for kind in ("corrected", "levels"):
+                for suffix in SUFFIXES:
+                    case = kind + suffix
+                    row = {name: error_summary(model, tag, case, name)["rms"] for name in ("system", "tweeter")}
+                    row["pir"] = deviation(cta_h(model, tag, case), ref, "pir")
+                    out[(model, tag, kind, suffix)] = row
+    return out
+
+
+CONVERGENCE_LINES = (("bem", "corrected", "BEM", "-", "o"), ("bem", "levels", "BEM, levels interpolated", "-.", "s"),
+                     ("ded", "corrected", "DED", ":", "^"))
+
+
+def fig_convergence(conv):
+    """The residual against the angular step, at each distance."""
+    fig, axes = plt.subplots(1, 3, figsize=(7.0, 2.7))
+    steps = [STEP_OF[suffix] for suffix in SUFFIXES]
+    colors = dict(zip(("1m", "2m", "4m"), ps.SLOTS))
+    titles = {"system": "2-way sum: RMS error (dB)", "tweeter": "tweeter: RMS error (dB)",
+              "pir": "largest PIR deviation (dB)"}
+    for ax, key in zip(axes, ("system", "tweeter", "pir")):
+        for tag in TAGS:
+            for model, kind, _, ls, marker in CONVERGENCE_LINES:
+                values = [conv[(model, tag, kind, suffix)][key] for suffix in SUFFIXES]
+                ax.plot(steps, values, color=colors[tag], ls=ls, marker=marker, ms=3.0, lw=1.1)
+        ax.set_xscale("log")
+        ax.set_xticks(steps)
+        ax.set_xticklabels([f"{step:g}°" for step in steps])
+        ax.xaxis.set_minor_formatter(plt.matplotlib.ticker.NullFormatter())
+        ax.set_xlim(steps[0] * 1.15, steps[-1] / 1.15)
+        ax.set_ylim(bottom=0)
+        ax.set_xlabel("angular step")
+        ax.set_title(titles[key], loc="left")
+    handles = [Line2D([], [], color=colors[tag], lw=1.4) for tag in TAGS]
+    handles += [Line2D([], [], color=ps.INK_2, ls=ls, marker=marker, ms=3.0) for _, _, _, ls, marker in CONVERGENCE_LINES]
+    labels = [f"{tag[0]} m" for tag in TAGS] + [label for _, _, label, _, _ in CONVERGENCE_LINES]
+    fig.tight_layout(w_pad=0.8, rect=(0, 0.1, 1, 1))
+    fig.legend(handles, labels, loc="lower center", ncol=len(labels), fontsize=6.3, handlelength=2.4)
+    fig.savefig(FIG / "bem_convergence.pdf")
+    plt.close(fig)
+
+
+def tables(numbers, ded_numbers, dvb, conv):
     TAB.mkdir(parents=True, exist_ok=True)
     with open(TAB / "bem_errors.tex", "w") as fh:
-        for tag in ("1m", "2m"):
+        for tag in TAGS:
             for model in ("bem", "ded"):
                 for name in ALL:
                     cells = []
@@ -477,8 +553,18 @@ def tables(numbers, ded_numbers, dvb):
                         cells.append(f"{s['rms']:.2f} & {s['max']:.1f}")
                     fh.write(f"{tag[0]}\\,m & {MODELS[model]} & {LABELS[name]} & " + " & ".join(cells) + " \\\\\n")
                 fh.write("\\addlinespace\n")
+    with open(TAB / "bem_convergence.tex", "w") as fh:
+        for tag in TAGS:
+            for model, kind, label, _, _ in CONVERGENCE_LINES:
+                cells = []
+                for key in ("system", "tweeter", "pir"):
+                    cells += [f"{conv[(model, tag, kind, suffix)][key]:.2f}" for suffix in SUFFIXES]
+                fh.write(f"{tag[0]}\\,m & {label} & " + " & ".join(cells) + " \\\\\n")
+            fh.write("\\addlinespace\n")
     with open(TAB / "bem_variants.tex", "w") as fh:
         for v, label in VARIANT_LABELS.items():
+            if any((tag, v) not in numbers for tag in ("1m", "2m")):
+                continue
             cells = []
             for tag in ("1m", "2m"):
                 r = numbers[(tag, v)]
@@ -486,7 +572,7 @@ def tables(numbers, ded_numbers, dvb):
                              f"{r['pir']:.2f}")
             fh.write(f"{label} & " + " & ".join(cells) + " \\\\\n")
     with open(TAB / "bem_cta.tex", "w") as fh:
-        for tag in ("1m", "2m"):
+        for tag in TAGS:
             for model in ("bem", "ded"):
                 ref = cta_h(model, tag, "rigorous")
                 for case in ("raw", "corrected"):
@@ -494,21 +580,38 @@ def tables(numbers, ded_numbers, dvb):
                     cells = [f"{deviation(c, ref, k):.2f}" for k in ("lw", "er", "sp", "pir", "di")]
                     what = "uncorrected" if case == "raw" else "corrected"
                     fh.write(f"{tag[0]}\\,m & {MODELS[model]} & {what} & " + " & ".join(cells) + " \\\\\n")
-    # Both orbits: BEM (vertical orbit rigorous) and DED (vertical orbit measured on its side too).
-    rows = (("bem", "raw", "v-rigorous", "uncorrected", "rigorous"),
-            ("bem", "corrected", "v-rigorous", "corrected", "rigorous"),
-            ("ded", "raw", "v-raw", "uncorrected", "uncorrected"),
-            ("ded", "corrected", "v-corrected", "corrected", "corrected"))
+    # Both orbits. With the BEM's vertical orbit measured on its side too, both orbits are corrected.
+    if BEM_VERTICAL:
+        rows = [(model, h, v, hl, vl) for model in ("bem", "ded") for h, v, hl, vl in (
+            ("raw", "v-raw", "uncorrected", "uncorrected"),
+            ("corrected", "v-corrected", "corrected", "corrected"),
+            ("levels5", "v-levels5", "levels, 5°", "levels, 5°"))]
+    else:
+        rows = [("bem", "raw", "v-rigorous", "uncorrected", "rigorous"),
+                ("bem", "corrected", "v-rigorous", "corrected", "rigorous"),
+                ("ded", "raw", "v-raw", "uncorrected", "uncorrected"),
+                ("ded", "corrected", "v-corrected", "corrected", "corrected")]
     with open(TAB / "bem_cta2.tex", "w") as fh:
-        for tag in ("1m", "2m"):
+        for tag in TAGS:
             for model, hc, vc, hl, vl in rows:
                 ref = cta_hv(model, tag, "rigorous", "v-rigorous")
                 c = cta_hv(model, tag, hc, vc)
                 cells = [f"{deviation(c, ref, k):.2f}" for k in ("lw", "er", "sp", "pir", "di", "erdi")]
                 fh.write(f"{tag[0]}\\,m & {MODELS[model]} & {hl} & {vl} & " + " & ".join(cells) + " \\\\\n")
             fh.write("\\addlinespace\n")
+    # The vertical orbit itself, measured with the cabinet on its side.
+    with open(TAB / "bem_vertical.tex", "w") as fh:
+        for tag in TAGS:
+            for model in ("bem", "ded"):
+                if f"{model}/{tag}/v-corrected/system/power" not in DATA.files:
+                    continue
+                cells = []
+                for name in ("system", "tweeter", "woofer"):
+                    cells += [f"{error_summary(model, tag, case, name)['rms']:.2f}"
+                              for case in ("v-raw", "v-corrected", "v-corrected5")]
+                fh.write(f"{tag[0]}\\,m & {MODELS[model]} & " + " & ".join(cells) + " \\\\\n")
     with open(TAB / "bem_dedvsbem.tex", "w") as fh:
-        for tag in ("1m", "2m"):
+        for tag in TAGS:
             for name in ALL:
                 r = dvb[(tag, name)]
                 fh.write(f"{tag[0]}\\,m & {LABELS[name]} & {r['front'][0]:.2f} & {r['front'][1]:.2f} & "
@@ -517,29 +620,38 @@ def tables(numbers, ded_numbers, dvb):
     # Key numbers for the text.
     macros = {}
     for model, nums in (("bem", numbers), ("ded", ded_numbers)):
-        for tag in ("1m", "2m"):
-            t = "One" if tag == "1m" else "Two"
-            for v, key in (("raw", "Raw"), ("corrected", "Cor"), ("corrected5", "Five"), ("levels", "Lev"),
-                           ("levels5", "LevFive"), ("lateral_omitted", "LatZero"), ("lateral_sign", "LatSign"),
+        for tag in TAGS:
+            t = TAG_WORD[tag]
+            for v, key in (("raw", "Raw"), ("corrected", "Cor"), ("corrected5", "Five"), ("corrected2", "Fine"),
+                           ("levels", "Lev"), ("levels5", "LevFive"), ("levels2", "LevFine"),
+                           ("lateral_omitted", "LatZero"), ("lateral_sign", "LatSign"),
                            ("woofer_offset_omitted", "WfZero")):
+                if (tag, v) not in nums:
+                    continue
                 r = nums[(tag, v)]
                 macros[f"{model}Pir{key}{t}"] = f"{r['pir']:.2f}"
                 for name, short in (("system", "Sys"), ("tweeter", "Tw"), ("woofer", "Wf")):
                     macros[f"{model}{short}{key}{t}"] = f"{r[name]['rms']:.2f}"
                     macros[f"{model}{short}max{key}{t}"] = f"{r[name]['max']:.1f}"
-    for tag in ("1m", "2m"):
-        t = "One" if tag == "1m" else "Two"
+    for tag in TAGS:
+        t = TAG_WORD[tag]
         for name, short in (("system", "Sys"), ("tweeter", "Tw"), ("woofer", "Wf")):
             macros[f"dvb{short}Front{t}"] = f"{dvb[(tag, name)]['front'][0]:.2f}"
             macros[f"dvb{short}Rear{t}"] = f"{dvb[(tag, name)]['rear'][0]:.2f}"
-        ref = cta_hv("bem", tag, "rigorous", "v-rigorous")
-        macros[f"bemPirBothCor{t}"] = f"{deviation(cta_hv('bem', tag, 'corrected', 'v-rigorous'), ref, 'pir'):.2f}"
-        macros[f"bemPirBothRaw{t}"] = f"{deviation(cta_hv('bem', tag, 'raw', 'v-rigorous'), ref, 'pir'):.2f}"
-        ref = cta_hv("ded", tag, "rigorous", "v-rigorous")
-        macros[f"dedPirBothCor{t}"] = f"{deviation(cta_hv('ded', tag, 'corrected', 'v-corrected'), ref, 'pir'):.2f}"
-        macros[f"dedPirBothRaw{t}"] = f"{deviation(cta_hv('ded', tag, 'raw', 'v-raw'), ref, 'pir'):.2f}"
+        for model in ("bem", "ded"):
+            ref = cta_hv(model, tag, "rigorous", "v-rigorous")
+            vertical = model == "ded" or BEM_VERTICAL
+            for key, h, v in (("Raw", "raw", "v-raw"), ("Cor", "corrected", "v-corrected"),
+                              ("LevFive", "levels5", "v-levels5")):
+                c = cta_hv(model, tag, h, v if vertical else "v-rigorous")
+                macros[f"{model}PirBoth{key}{t}"] = f"{deviation(c, ref, 'pir'):.2f}"
+            if vertical:
+                for case, key in (("v-raw", "Raw"), ("v-corrected", "Cor"), ("v-corrected5", "Five")):
+                    macros[f"{model}SysVert{key}{t}"] = f"{error_summary(model, tag, case, 'system')['rms']:.2f}"
+                    macros[f"{model}TwVert{key}{t}"] = f"{error_summary(model, tag, case, 'tweeter')['rms']:.2f}"
     solve = {k[len("solve/"):]: DATA[k] for k in DATA.files if k.startswith("solve/")}
     macros["bemFreqs"] = f"{len(F)}"
+    macros["bemPoints"] = f"{len(TAGS) * 4 * len(ANGLES[SUFFIXES[-1]])}"
     if "unknowns" in solve:
         macros["bemUnknownsMax"] = f"{int(solve['unknowns'].max()):,}".replace(",", "\\,")
         macros["bemTrianglesMax"] = f"{int(solve['triangles'].max()):,}".replace(",", "\\,")
@@ -564,7 +676,9 @@ def main():
     fig_residuals()
     fig_pir()
     fig_spinorama()
-    tables(variant_numbers("bem"), variant_numbers("ded"), ded_vs_bem_numbers())
+    conv = convergence_numbers()
+    fig_convergence(conv)
+    tables(variant_numbers("bem"), variant_numbers("ded"), ded_vs_bem_numbers(), conv)
 
 
 if __name__ == "__main__":

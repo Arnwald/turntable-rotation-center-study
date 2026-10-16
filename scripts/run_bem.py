@@ -1,17 +1,18 @@
 """The boundary-element check: the two-way variant, BEM against DED, rigorous against corrected.
 
 Reads ``data/bem/two_way.npz`` (pressures of each driver per unit volume velocity), builds the
-two-way from the datasheets and computes, at the BEM frequencies (1/48 octave, 20 Hz-16 kHz, no
-smoothing) and positions, for 1 m and 2 m:
+two-way from the datasheets and computes, at the BEM frequencies (1/48 octave, 20 Hz-16 kHz) and
+positions, at every distance of the data, for the BEM and for the DED model of the same loudspeaker:
 
-* ``rigorous``, ``raw`` and ``corrected`` data on the horizontal orbit, 10 and 5 degree steps
-  (``*5``), each driver and the summed loudspeaker, for the BEM and for the DED model of the same
-  loudspeaker; ``levels``: corrected with the powers interpolated instead of the complex responses;
-* the correction variants of the three-way study (wrong parameters);
-* the vertical orbit: ``v-rigorous`` for both models and, for the DED model only (the BEM was not
-  solved there), ``v-raw`` and ``v-corrected`` with the loudspeaker on its side on the turntable.
+* on the horizontal orbit, ``rigorous``, ``raw`` and ``corrected`` data with 10, 5 and 2.5 degree
+  steps (suffixes ``""``, ``"5"``, ``"2"``; the finer steps where the data have them), each driver
+  and the summed loudspeaker; ``levels``: corrected with the powers interpolated instead of the
+  complex responses;
+* the correction variants of the three-way study (wrong parameters), 10 degree steps;
+* the same on the vertical orbit (prefix ``v-``), measured with the loudspeaker on its side
+  (``v-raw`` and ``v-corrected`` for the BEM where the data have the centered vertical orbit).
 
-Output: ``results/bem.npz`` (power spectra ``|p|^2``, smoothed to 1/24 octave).
+Output: ``results/bem.npz`` (power spectra ``|p|^2``, smoothed to 1/24 octave, single precision).
 
 Usage: ``python3 scripts/run_bem.py [DATA.npz [OUT.npz]]``.
 """
@@ -34,7 +35,8 @@ from rotcenter.signal import smooth_power  # noqa: E402
 from rotcenter.simulate import Loudspeaker  # noqa: E402
 from run_study import VARIANTS  # noqa: E402
 
-DISTANCES = (1.0, 2.0)
+#: Angular steps (degrees) and the suffix of their cases.
+STEPS = ((10.0, ""), (5.0, "5"), (2.5, "2"))
 
 
 class Models:
@@ -81,7 +83,8 @@ class Store:
     def add(self, key, spectra, filters):
         spectra = dict(spectra, system=twoway.system_sum(filters, spectra))
         for name, s in spectra.items():
-            self.data[f"{key}/{name}/power"] = smooth_power(self.freqs, np.abs(s) ** 2, 24, self.freqs)
+            self.data[f"{key}/{name}/power"] = smooth_power(self.freqs, np.abs(s) ** 2, 24,
+                                                            self.freqs).astype(np.float32)
 
 
 def main():
@@ -100,30 +103,32 @@ def main():
     for key, value in bem.solves.items():
         store.data[f"solve/{key}"] = value
 
+    base = 360.0 / len(bem.angles)
+    steps = [(step, suffix) for step, suffix in STEPS if step >= base - 1e-9
+             and abs(step / base - round(step / base)) < 1e-9]
+    distances = sorted({distance for _, distance in bem.sets.values()})
+    for step, suffix in steps:
+        store.data[f"angles{suffix}"] = twoway.orbit({}, bem.angles, step)[0]
     for model in ("bem", "ded"):
-        for d in DISTANCES:
+        for d in distances:
             tag = f"{model}/{d:.0f}m"
-            rig = models.polar(model, "rigorous-h", d)
-            raw = models.polar(model, "centered-h", d)
-            for step, suffix in ((10, ""), (5, "5")):
-                angles, r = twoway.orbit(rig, bem.angles, step)
-                _, m = twoway.orbit(raw, bem.angles, step)
-                store.data[f"angles{suffix}"] = angles
-                fixed = corrected(m, angles, d, freqs)
-                store.add(f"{tag}/rigorous{suffix}", r, filters)
-                store.add(f"{tag}/raw{suffix}", m, filters)
-                store.add(f"{tag}/corrected{suffix}", fixed, filters)
-                store.add(f"{tag}/levels{suffix}", corrected(m, angles, d, freqs, levels=True), filters)
-                if step == 10:
-                    for variant, change in VARIANTS.items():
-                        store.add(f"{tag}/{variant}", corrected(m, angles, d, freqs, change=change), filters)
-            # Vertical orbit.
-            angles, rv = twoway.orbit(models.polar(model, "rigorous-v", d), bem.angles, 10)
-            store.add(f"{tag}/v-rigorous", rv, filters)
-            if model == "ded":
-                _, mv = twoway.orbit(models.polar(model, "centered-v", d), bem.angles, 10)
-                store.add(f"{tag}/v-raw", mv, filters)
-                store.add(f"{tag}/v-corrected", corrected(mv, angles, d, freqs, plane="v"), filters)
+            for plane, prefix in (("h", ""), ("v", "v-")):
+                rig = models.polar(model, f"rigorous-{plane}", d)
+                centered = f"centered-{plane}-{d:.0f}m"
+                raw = models.polar(model, f"centered-{plane}", d) if model == "ded" or centered in bem.sets else None
+                for step, suffix in steps:
+                    angles, r = twoway.orbit(rig, bem.angles, step)
+                    store.add(f"{tag}/{prefix}rigorous{suffix}", r, filters)
+                    if raw is None:
+                        continue
+                    _, m = twoway.orbit(raw, bem.angles, step)
+                    store.add(f"{tag}/{prefix}raw{suffix}", m, filters)
+                    store.add(f"{tag}/{prefix}corrected{suffix}", corrected(m, angles, d, freqs, plane), filters)
+                    store.add(f"{tag}/{prefix}levels{suffix}",
+                              corrected(m, angles, d, freqs, plane, levels=True), filters)
+                    if plane == "h" and step == 10.0:
+                        for variant, change in VARIANTS.items():
+                            store.add(f"{tag}/{variant}", corrected(m, angles, d, freqs, change=change), filters)
             print(f"{tag} done ({time.time() - t0:.0f} s)")
     out = Path(sys.argv[2]) if len(sys.argv) > 2 else ROOT / "results" / "bem.npz"
     out.parent.mkdir(exist_ok=True)
