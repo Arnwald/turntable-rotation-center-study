@@ -343,7 +343,7 @@ def fig_residuals():
               ("bem", "corrected5", "BEM, 5° steps", ps.SLOTS[1], "--"),
               ("ded", "corrected", "DED, 10° steps", ps.SLOTS[2], ":")]
     if "2" in ANGLES:
-        curves.insert(3, ("bem", "corrected2", "BEM, 2.5° steps", ps.SLOTS[6], (0, (1, 1))))
+        curves.insert(3, ("bem", "corrected2", "BEM, 2.5° steps", ps.SLOTS[6], (0, (2, 1))))
     for row, tag in enumerate(TAGS):
         for col, name in enumerate(ALL):
             ax = axes[row, col]
@@ -649,6 +649,7 @@ def tables(numbers, ded_numbers, dvb, conv):
                 for case, key in (("v-raw", "Raw"), ("v-corrected", "Cor"), ("v-corrected5", "Five")):
                     macros[f"{model}SysVert{key}{t}"] = f"{error_summary(model, tag, case, 'system')['rms']:.2f}"
                     macros[f"{model}TwVert{key}{t}"] = f"{error_summary(model, tag, case, 'tweeter')['rms']:.2f}"
+                    macros[f"{model}WfVert{key}{t}"] = f"{error_summary(model, tag, case, 'woofer')['rms']:.2f}"
     solve = {k[len("solve/"):]: DATA[k] for k in DATA.files if k.startswith("solve/")}
     macros["bemFreqs"] = f"{len(F)}"
     macros["bemPoints"] = f"{len(TAGS) * 4 * len(ANGLES[SUFFIXES[-1]])}"
