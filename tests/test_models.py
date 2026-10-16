@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from rotcenter.constants import C
-from rotcenter.cta2034 import SP_WEIGHTS, horizontal_cta2034
+from rotcenter.cta2034 import SP_WEIGHTS, cta2034, horizontal_cta2034
 from rotcenter.diffraction import EdgeDiffraction, direct_term, edge_propagation
 from rotcenter.directivity import Radiator, piston
 from rotcenter.drivers import Driver, closed_box_alignment
@@ -82,3 +82,19 @@ def test_cta_curves_of_an_omnidirectional_source():
     for name in ("lw", "er", "sp", "pir"):
         assert np.allclose(curves[name], p)
     assert np.allclose(curves["di"], 0.0)
+
+
+def test_two_orbit_cta_curves():
+    p = np.array([2.0, 3.0])
+    omni = {a: p for a in range(-170, 181, 10)}
+    curves = cta2034(omni, omni)
+    for name in ("lw", "er", "sp", "pir"):
+        assert np.allclose(curves[name], p)
+    # Identical orbits: the sound power is that of the horizontal orbit alone.
+    beam = {a: np.array([1.0 + np.cos(np.radians(a))]) for a in range(-170, 181, 10)}
+    assert np.allclose(cta2034(beam, beam)["sp"], horizontal_cta2034(beam)["sp"])
+    # The floor and ceiling bounces come from the vertical orbit only.
+    loud_up = {**omni, **{a: 10.0 * p for a in (40, 50, 60)}}
+    c = cta2034(omni, loud_up)
+    assert np.allclose(c["er_ceiling"], 10.0 * p) and np.allclose(c["er_front"], p)
+    assert np.allclose(c["er"], p * (4.0 + 10.0) / 5.0)

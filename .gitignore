@@ -2,6 +2,7 @@ __pycache__/
 .pytest_cache/
 results/cache/
 results/study.npz
+results/bem.npz
 results/*.log
 paper/*.aux
 paper/*.log

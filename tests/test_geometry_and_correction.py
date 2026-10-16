@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from rotcenter.constants import C
-from rotcenter.correction import PlaneGeometry, PlaneOffsets, Sample, correct_plane
+from rotcenter.correction import PlaneGeometry, PlaneOffsets, Sample, correct_plane, correct_spectra
 from rotcenter.geometry import CENTERED, MID, REFERENCE, RIGOROUS, TWEETER, WOOFER, correction_offsets, mic_positions
 
 ANGLES = np.arange(-170, 181, 10)
@@ -121,3 +121,31 @@ def test_directional_point_source_is_corrected_closely():
         before = error_db(irs[i], ideal(o, a, beam))
         after = error_db(out[i][:4096], ideal(o, a, beam))
         assert after < -25.0 and after < before - 10.0, (a, before, after)
+
+
+def test_frequency_domain_correction_matches_the_time_domain():
+    o = PlaneOffsets(depth_mm=145.0, lateral_mm=120.0, driver_offset_mm=-205.0, mic_distance_mm=1000.0)
+    beam = lambda phi: (0.55 + 0.45 * np.cos(phi), 2000.0 + 6000.0 * (1 + np.cos(phi)))  # noqa: E731
+    irs = measured_set(o, beam)
+    out = correct_plane([Sample(a, ir) for a, ir in zip(ANGLES, irs)], o, FS)
+    n = 8192
+    freqs = np.fft.rfftfreq(n, 1.0 / FS)
+    spectra = np.stack([np.fft.rfft(ir, n) for ir in irs])
+    fixed = correct_spectra(spectra, ANGLES, o, freqs)
+    for i in range(len(ANGLES)):
+        ref = spectra[i] if out[i] is None else np.fft.rfft(out[i], n)
+        # Up to the band-limited tails the time-domain version cuts at the ends of its window.
+        assert np.max(np.abs(fixed[i] - ref)) < 2e-5 * np.max(np.abs(ref))
+
+
+@pytest.mark.parametrize("driver_offset", [0.0, -205.0])
+def test_frequency_domain_correction_of_a_point_source_is_exact(driver_offset):
+    o = PlaneOffsets(depth_mm=145.0, lateral_mm=120.0, driver_offset_mm=driver_offset, mic_distance_mm=2000.0)
+    g = PlaneGeometry(o)
+    freqs = 20.0 * 2.0 ** (np.arange(400) / 40.0)
+    source = lambda phi, rho: np.exp(-2j * np.pi * freqs * rho / C) / rho  # noqa: E731
+    spectra = np.stack([source(*g.measured(a)) for a in ANGLES])
+    fixed = correct_spectra(spectra, ANGLES, o, freqs)
+    for i, a in enumerate(ANGLES):
+        ideal_spectrum = source(*g.ideal(a)) if a != 0 else spectra[i]
+        assert np.max(np.abs(fixed[i] - ideal_spectrum)) < 1e-12 * np.max(np.abs(ideal_spectrum))
