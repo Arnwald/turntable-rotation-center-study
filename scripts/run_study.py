@@ -4,9 +4,14 @@ Cases, for microphone distances of 1 m and 2 m, horizontal orbit -170 ... 180 de
 
 * ``rigorous``: turntable axis through the reference point on the baffle;
 * ``raw``: cabinet centered on the turntable, microphone moved sideways onto the reference axis;
-* ``corrected``: ``raw`` after the rotation-center correction with the true offsets;
-* variants of ``corrected`` with wrong or missing correction parameters, a 5-degree orbit, and
-  the edge diffraction switched off.
+* ``corrected``: ``raw`` after the rotation-center correction with the true offsets (3D distances,
+  powers interpolated);
+* variants of ``corrected`` with wrong or missing correction parameters, the complex responses
+  interpolated instead of the powers (``complex``, and the lateral offset's two mistakes with them,
+  ``-complex``), the drivers' heights ignored (``heights_ignored``), a 5-degree orbit, and the edge
+  diffraction switched off;
+* at another distance: the 1 m measurements rebuilt as from the 2 m circle (``1m/corrected@2m``,
+  and ``1m/rigorous@2m`` from the rigorous setup's), to compare with the rigorous 2 m data.
 
 Output: ``results/study.npz`` (1/24-octave smoothed power spectra on a 1/48-octave grid).
 """
@@ -22,7 +27,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from rotcenter.correction import PlaneOffsets, Sample, correct_plane  # noqa: E402
+from rotcenter.correction import Across, PlaneOffsets, Sample, correct_plane  # noqa: E402
 from rotcenter.diffraction import direct_term  # noqa: E402
 from rotcenter.geometry import CENTERED, RIGOROUS, Placement, correction_offsets, mic_positions  # noqa: E402
 from rotcenter.signal import log_grid, smooth_power  # noqa: E402
@@ -45,21 +50,31 @@ VARIANTS = {
     "lateral_plus10": dict(lateral_mm=lambda o: o["lateral_mm"] + 10.0),
     "lateral_minus10": dict(lateral_mm=lambda o: o["lateral_mm"] - 10.0),
     "distance_plus20": dict(mic_distance_mm=lambda o: o["mic_distance_mm"] + 20.0),
+    "heights_ignored": dict(out_of_plane_mm=lambda o: 0.0),
 }
 
 
-def corrected(ls, raw, angles, distance, change=None):
-    """Spectra after the correction, ``{driver: (n_angles, n_freqs)}``."""
+def corrected(ls, raw, angles, distance, change=None, levels=True, setup=CENTERED, calculation=None, across=True):
+    """Spectra after the correction, ``{driver: (n_angles, n_freqs)}``: ``change``, a variant's wrong
+    parameters; ``levels``, the powers interpolated (``False``: the complex responses); ``setup``, the
+    turntable the data were measured on; ``calculation``, the distance the results are rebuilt at
+    (m), with the driver taken as symmetric about its axis for the change of angle across the plane
+    (only the horizontal orbit is measured; ``across=False``: that change left out)."""
     out = {}
     for name, driver in ls.drivers.items():
-        offsets = correction_offsets(CENTERED, driver.placement, distance)
+        offsets = correction_offsets(setup, driver.placement, distance)
         if change:
             for key, fn in change.items():
                 if key == "driver_offset_mm" and name != "woofer":
                     continue
                 offsets[key] = fn(offsets)
+        other = None
+        if calculation is not None:
+            offsets["calculation_distance_mm"] = calculation * 1e3
+            other = Across([], [], PlaneOffsets(**offsets)) if across else None
         irs = ls.impulse_responses(raw[name])
-        fixed = correct_plane([Sample(float(a), ir) for a, ir in zip(angles, irs)], PlaneOffsets(**offsets), ls.fs)
+        fixed = correct_plane([Sample(float(a), ir) for a, ir in zip(angles, irs)], PlaneOffsets(**offsets), ls.fs,
+                              across=other, levels=levels)
         rows = [np.fft.rfft(c[: ls.n_fft], ls.n_fft) if c is not None else raw[name][i] for i, c in enumerate(fixed)]
         out[name] = np.stack(rows)
     return out
@@ -122,6 +137,18 @@ def main():
                 for variant, change in VARIANTS.items():
                     v = corrected(ls, raw, ANGLES, distance, change)
                     store.add(f"{tag}/{variant}", dict(v, system=system_sum(filters, v)), ref)
+                v = corrected(ls, raw, ANGLES, distance, levels=False)
+                store.add(f"{tag}/complex", dict(v, system=system_sum(filters, v)), ref)
+                for variant in ("lateral_omitted", "lateral_sign"):
+                    v = corrected(ls, raw, ANGLES, distance, VARIANTS[variant], levels=False)
+                    store.add(f"{tag}/{variant}-complex", dict(v, system=system_sum(filters, v)), ref)
+                if distance == 1.0:
+                    # Rebuilt at 2 m from the 1 m measurements, centered and rigorous.
+                    for name, data, setup in (("corrected", raw, CENTERED), ("rigorous", rigorous, RIGOROUS)):
+                        v = corrected(ls, data, ANGLES, distance, setup=setup, calculation=2.0)
+                        store.add(f"{tag}/{name}@2m", dict(v, system=system_sum(filters, v)))
+                    v = corrected(ls, raw, ANGLES, distance, calculation=2.0, across=False)
+                    store.add(f"{tag}/plain@2m", dict(v, system=system_sum(filters, v)))
                 # Time domain, a few angles (impulse responses of the tweeter and of the system).
                 for name, spectra in cases.items():
                     for drv in ("tweeter", "mid", "woofer"):
@@ -129,6 +156,9 @@ def main():
                     sys_spec = system_sum(filters, spectra)[[17, 26, 32, 35]]
                     store.data[f"{tag}/{name}/system/ir"] = ls.impulse_responses(sys_spec)
             else:
+                v = corrected(ls, raw, ANGLES, distance, levels=False)
+                store.add(f"{tag}{dtag}/complex", dict(v, system=system_sum(filters, v)),
+                          dict(rigorous, system=system_sum(filters, rigorous)))
                 flat_r = direct_only_flat(ls, mic_positions(RIGOROUS, ANGLES, distance))
                 flat_c = direct_only_flat(ls, mic_positions(CENTERED, ANGLES, distance))
                 flat_fix = corrected(ls, flat_c, ANGLES, distance)

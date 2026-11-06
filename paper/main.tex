@@ -46,26 +46,28 @@ turntables available to small manufacturers and hobbyists are usually too small 
 cabinet ends up centered on the turntable, the rotation axis lies well behind the baffle and, for
 an asymmetric layout, off to the side. The microphone is then farther away and in another
 direction than intended. A purely geometric correction --- each driver treated as a point source
-with its own directivity, measurements re-propagated to the intended distance and interpolated
-to the intended direction --- can rebuild the intended polar data. We test it in free field on a
-simulated horizontal three-way monitor (8-inch woofer, 3-inch dome midrange, 1.1-inch dome
+with its own directivity, measurements re-propagated in 3D to the intended distance and their powers
+interpolated to the intended direction --- can rebuild the intended polar data. We test it in free
+field on a simulated horizontal three-way monitor (8-inch woofer, 3-inch dome midrange, 1.1-inch dome
 tweeter, $440\times290\times290$\,mm closed box) whose cabinet diffraction follows the
 Distributed Edge Dipole model, for a horizontal orbit from $-180^\circ$ to $180^\circ$ in
-$10^\circ$ steps at 1\,m and 2\,m. Without diffraction the correction is essentially exact
-(below 0.1\,dB RMS). With diffraction, about \sysCorOne\,dB RMS remains on the summed loudspeaker at 1\,m
-(\sysRawOne\,dB without correction), concentrated behind the cabinet at mid and high
-frequencies. The Predicted In-Room Response computed from the corrected data stays within
-\pirCorOne\,dB (1\,m) and \pirCorTwo\,dB (2\,m) of the rigorous one, instead of \pirRawOne\,dB and
-\pirRawTwo\,dB uncorrected. The lateral offset of the microphone is essential: omitting it or
-entering it with the wrong sign does more harm than not correcting at all. A boundary-element
-solution of a two-way variant in the same cabinet, with extended rigid radiators and the whole
-cabinet, confirms these results below about 3\,kHz but shows more diffraction above: the rigid dome
-tweeter radiates wider than its aperture model, the far edge of the baffle adds fine interference
-ripples, and with $10^\circ$ steps the corrected PIR deviates by up to \bemPirCorOne\,dB in narrow bands at
-1\,m (\bemPirCorTwo\,dB at 2\,m). That residual is mostly the angular step: with $2.5^\circ$ steps the PIR
-comes within \bemPirFineOne\,dB at 1\,m and \bemPirFineTwo\,dB at 2\,m; with coarse steps, interpolating
-levels rather than complex responses helps. The vertical orbit, measured with the cabinet on its side,
-is corrected the same way.
+$10^\circ$ steps at 1\,m and 2\,m. Without diffraction the correction is close to exact
+(\sysDirCorOne\,dB RMS on the summed loudspeaker at 1\,m). With diffraction, about \sysCorOne\,dB RMS
+remains on the summed loudspeaker at 1\,m (\sysRawOne\,dB without correction), concentrated behind the
+cabinet at mid and high frequencies. The Predicted In-Room Response computed from the corrected data
+stays within \pirCorOne\,dB (1\,m) and \pirCorTwo\,dB (2\,m) of the rigorous one, instead of \pirRawOne\,dB
+and \pirRawTwo\,dB uncorrected. The lateral offset of the microphone matters for the individual curves:
+omitted, or entered with the wrong sign, it leaves four to seven times the residual error, although the
+spatial averages hardly notice. A boundary-element solution of a two-way variant in the same cabinet,
+with extended rigid radiators and the whole cabinet, confirms these results below about 3\,kHz but shows
+more diffraction above: the rigid dome tweeter radiates wider than its aperture model, the far edge of
+the baffle adds fine interference ripples, and with $10^\circ$ steps the corrected PIR deviates by up to
+\bemPirCorOne\,dB in narrow bands at 1\,m (\bemPirCorTwo\,dB at 2\,m). That residual is mostly the angular
+step: with $2.5^\circ$ steps the PIR comes within \bemPirFineOne\,dB at 1\,m and \bemPirFineTwo\,dB at 2\,m.
+Interpolating powers rather than complex responses halves the residual of the individual curves with
+$10^\circ$ steps. The vertical orbit, measured with the cabinet on its side, is corrected the same way.
+Rebuilt as from a 2\,m circle, measurements taken at 1\,m keep the cabinet's near field: the diffraction
+pattern and the low-frequency acoustic center, which no point-source model moves to another distance.
 \end{abstract}
 
 \tableofcontents
@@ -94,7 +96,9 @@ arbitrary directivity is assumed; every measurement is moved to the intended dis
 and a gain) and the response in the intended direction is interpolated between the two
 measurements that bracket it. The method needs four numbers per plane: where the rotation axis was
 relative to the baffle (depth and lateral offset), where each driver is relative to the reference
-axis, and the microphone distance.
+axis, and the microphone distance; the drivers' heights relative to the microphone make the distances
+exact in 3D. The same model can rebuild the data as seen from a larger circle than the one measured on
+(CTA-2034-A measures at 2\,m), which Section~\ref{sec:distance} tests too.
 
 This report checks how well that works. The setting is deliberately idealized: free field
 (no room, no gating), a loudspeaker simulated from its drivers' datasheets, and a diffraction
@@ -426,24 +430,26 @@ and $x$ toward the \emph{+ side} (the side the microphone faces at $+90^\circ$).
   \item the lateral offset $\ell$: from the rotation axis to the reference axis, positive toward the
   + side;
   \item the driver offset $o$: from the reference axis to the driver, positive toward the + side;
-  \item the microphone distance $r_0$ from the baffle at $0^\circ$.
+  \item the microphone distance $r_0$ from the baffle at $0^\circ$;
+  \item the driver's height $h$ above the microphone, out of the plane of rotation.
 \end{itemize}
-Then the reference point is $\vect R=(\ell,\delta)$, the driver $\vect S=\vect R+(o,0)$, and
+Then the reference point is $\vect R=(\ell,\delta,0)$, the driver $\vect S=\vect R+(o,0,h)$ (third
+coordinate across the plane), and
 \begin{align}
-  \text{measured position:}\quad &\vect M_k=\mathcal R(\theta_k)\,(\ell,\ \delta+r_0),\\
-  \text{ideal position:}\quad &\vect M^*(\theta)=\vect R+r_0(\sin\theta,\ \cos\theta),
+  \text{measured position:}\quad &\vect M_k=\mathcal R(\theta_k)\,(\ell,\ \delta+r_0,\ 0),\\
+  \text{ideal position:}\quad &\vect M^*(\theta)=\vect R+r^*(\sin\theta,\ \cos\theta,\ 0),
 \end{align}
-with the rotation $\mathcal R(\theta)(x,y)=(x\cos\theta+y\sin\theta,\ -x\sin\theta+y\cos\theta)$
-(positive angles toward the + side).
-The 0$^\circ$ measurement is on the reference axis, $\ell$ away from the rotation axis: the lateral
-shift of the microphone is part of the model. Seen from the driver, every position has a direction
-and a distance,
+with the rotation $\mathcal R(\theta)(x,y,z)=(x\cos\theta+y\sin\theta,\ -x\sin\theta+y\cos\theta,\ z)$
+(positive angles toward the + side) and $r^*=r_0$ unless the results are rebuilt at another distance
+(Section~\ref{sec:another}). The 0$^\circ$ measurement is on the reference axis, $\ell$ away from the
+rotation axis: the lateral shift of the microphone is part of the model. Seen from the driver, every
+position has a direction in the plane and a distance in 3D,
 \begin{equation}
   \varphi=\operatorname{atan2}(M_x-S_x,\ M_y-S_y)\ \ (\text{unwrapped to within }\pi\text{ of }\theta),\qquad
   \rho=|\vect M-\vect S|.
 \end{equation}
 For the setup of Figure~\ref{fig:top}(b): $\delta=145$\,mm, $\ell=+120$\,mm, $o=-205$\,mm for the
-woofer and 0 for the midrange and tweeter, $r_0=1000$ or 2000\,mm.
+woofer and 0 for the midrange and tweeter, $h=-16.5$, $-65$ and $+65$\,mm, $r_0=1000$ or 2000\,mm.
 
 \subsection{Point-source re-propagation}
 
@@ -461,14 +467,52 @@ and a gain:
 
 The measurements, sorted by $\varphi_k$, serve as supports (for a full circle, copies at
 $\varphi_k\pm2\pi$ close the loop). For the target direction $\varphi^*$ the two bracketing supports
-$a$, $b$ are interpolated linearly \emph{after} both have been moved to $\rho^*$, so that they are in
-time and do not comb-filter:
+$a$, $b$, with the weights
 \begin{equation}
-  h^*(t)=(1-u)\,h_{a\to*}(t)+u\,h_{b\to*}(t),\qquad u=\frac{\varphi^*-\varphi_a}{\varphi_b-\varphi_a}.
+  u_a=1-u,\quad u_b=u,\qquad u=\frac{\varphi^*-\varphi_a}{\varphi_b-\varphi_a},
 \end{equation}
+are combined \emph{after} both have been moved to $\rho^*$, so that they are in time. Their powers are
+interpolated, with the phase of their complex interpolation:
+\begin{equation}
+  |H^*(f)|^2=\sum_k u_k\,|H_{k\to*}(f)|^2,\qquad \arg H^*(f)=\arg\sum_k u_k\,H_{k\to*}(f).
+  \label{eq:powers}
+\end{equation}
+Where the two supports are in phase, this is close to the linear interpolation of the complex responses.
+Where the angular step is too coarse for the pattern --- interference ripples finer than the step, behind
+the cabinet at high frequency --- they are not, and their complex mean cancels in part, digging notches
+that are in neither measurement; the mean of their powers does not (Section~\ref{sec:bemcorr}). The price
+is paid where the pattern is well sampled and changes level quickly with angle (a beaming driver's main
+lobe): there the mean of the powers reads slightly high (Section~\ref{sec:direct}).
+
 Outside the measured range the nearest support is used. The $0^\circ$ measurement is the reference and
 is never changed. A measurement copied by symmetry at $-\theta$ stands for the mirror image of the one
-at $\theta$ and is placed at $(-\varphi_k,\rho_k)$ of that one.
+at $\theta$ and is placed at $(-\varphi_k,\rho_k)$ of that one. When the turntable reports the angle it
+really stopped at, that angle places the support; the target stays the nominal angle.
+
+\subsection{At another distance}
+\label{sec:another}
+
+The targets can lie on a larger circle than the one measured on, $r^*>r_0$: the drivers' directions and
+paths are then those seen from that circle, and the result is brought back to the level and the time of
+flight of the measurement distance, so that the reference point keeps its own measurements as they are:
+\begin{equation}
+  g_k=\frac{\rho_k}{\rho^*}\,\frac{r^*}{r_0},\qquad
+  \tau_k=\frac{\rho^*-\rho_k-(r^*-r_0)}{c}.
+\end{equation}
+Only the differences between drivers and directions change with the distance. A driver out of the plane
+($h\ne0$) is then seen from another angle across the plane than it was measured at ($\arctan h/r_0$
+against $\arctan h/r^*$). The other plane's measurements give the change of its response between the two
+angles: the driver's power in any direction $\vect d$ is taken as its two planes' at the same angle
+$\vartheta$ off its axis,
+\begin{equation}
+  P(\vect d)=(1-s)\,P_\text{own}(\pm\vartheta)+s\,P_\text{other}(\pm\vartheta),
+\end{equation}
+where $s$ is the squared sine of the angle by which $\vect d$ turns around the axis from the plane, and
+$P_\text{own}$, $P_\text{other}$ are the two orbits' powers brought to 1\,m, smoothed over $\pm1/12$
+octave and interpolated in angle (around the circle, like the supports, for a full orbit). The response interpolated in the plane is multiplied by
+$\sqrt{P(\vect d^*)/P(\vect d_\text{int})}$, limited to $\pm6$\,dB, from the direction the supports stand
+for to the target's. With one orbit measured, the driver is taken as symmetric about its axis (the
+other plane's powers are this plane's).
 
 \subsection{Implementation}
 
@@ -476,18 +520,20 @@ The fractional delays are applied as linear phases. With $\tau_k=(\rho^*-\rho_k)
 $p=\lceil\max|\tau_k|\rceil+1$ samples of margin and an FFT length $N_c=2^{\lceil\log_2(L+2p+64)\rceil}$
 ($L$ the longest impulse response),
 \begin{equation}
-  H^*[m]=\sum_{\text{supports}} g_k\,X_k[m]\,e^{-\jj2\pi\tilde m(\tau_k+p)/N_c},\qquad
+  H_{k\to*}[m]=g_k\,X_k[m]\,e^{-\jj2\pi\tilde m(\tau_k+p)/N_c},\qquad
   \tilde m=\begin{cases}m & m\le N_c/2\\ m-N_c & m>N_c/2\end{cases},
 \end{equation}
-with $g_k$ the interpolation weight times $\rho_k/\rho^*$ and $X_k$ the DFT of the zero-padded
-measurement; the corrected impulse response is $\mathrm{Re}\,\mathrm{IDFT}\{H^*\}$ from sample $p$ on.
+with $g_k=\rho_k/\rho^*$ and $X_k$ the DFT of the zero-padded measurement; $H^*$ follows from
+Eq.~\eqref{eq:powers} bin by bin (the spectrum stays conjugate-symmetric) and the corrected impulse
+response is $\mathrm{Re}\,\mathrm{IDFT}\{H^*\}$ from sample $p$ on.
 
 \subsection{Assumptions}
 
 The method assumes a point source on the baffle plane whose far-field directivity does not depend on
-distance, and ignores what is outside the plane of rotation. The cabinet edges violate the first
-assumption; the vertical offsets between drivers and microphone (here $\pm65$\,mm for the domes),
-the third.
+distance. The cabinet edges violate it: they radiate from elsewhere than the driver, and how much of
+them the microphone hears changes with its distance. Directions are taken in the plane of rotation;
+the drivers' heights only enter the distances (and, at another distance, the change of angle across the
+plane).
 
 % =============================================================================================
 \section{Simulation protocol}
@@ -507,7 +553,10 @@ real FFT (341\,ms, far longer than any delay or decay).
   correction's own errors from those due to diffraction;
   \item \textbf{variants}: corrected with wrong parameters (lateral offset omitted or with the wrong
   sign, woofer offset omitted, depth or lateral offset off by $\pm10$\,mm, microphone distance off by
-  $+20$\,mm), and with a $5^\circ$ orbit.
+  $+20$\,mm, the drivers' heights ignored), with the complex responses interpolated instead of the
+  powers, and with a $5^\circ$ orbit;
+  \item \textbf{at another distance}: the 1\,m measurements rebuilt as seen from the 2\,m circle, from the
+  centered setup and from the rigorous one, compared with the rigorous 2\,m data.
 \end{itemize}
 
 \paragraph{Metrics.} Power spectra are smoothed to 1/24 octave,
@@ -589,13 +638,19 @@ show features of the wrong direction. Within the relevant points the summed loud
 \end{figure}
 
 \subsection{Corrected, direct sound only: the method itself}
+\label{sec:direct}
 
 Without edge diffraction every driver is exactly a point source with a directivity, as the
-correction assumes. What remains is the interpolation between measured directions and the vertical
-offsets that the planar model ignores: 0.02--0.08\,dB RMS and 0.6\,dB at worst
-(Table~\ref{tab:errors}, ``direct only''). Moving every driver to the microphone height changes the RMS
-figures by less than 0.01\,dB: the out-of-plane offsets are negligible at 1\,m and beyond. In this
-idealized world the correction is, for practical purposes, exact.
+correction assumes. What remains is the interpolation between measured directions:
+\sysDirCorOne\,dB RMS on the summed loudspeaker at 1\,m, \wfDirCorOne, \midDirCorOne\ and
+\twDirCorOne\,dB for the woofer, midrange and tweeter (Table~\ref{tab:errors}, ``direct only''). Most of
+it is the price of interpolating powers on a well-sampled pattern: where the main lobe of a beaming
+driver falls by several dB from one support to the next, the mean of their powers reads higher than the
+response between them. Interpolating the complex responses instead leaves \sysDirCpxOne\,dB on the sum
+and \midDirCpxOne\,dB on the midrange; Section~\ref{sec:bemcorr} shows what that choice costs with real
+diffraction. The drivers' heights ($\pm65$\,mm for the domes) do not matter at 1\,m and beyond: ignoring
+them changes the RMS figures by less than 0.01\,dB. In this idealized world the correction is, for
+practical purposes, exact.
 
 \begin{table}[tbp]
   \centering
@@ -619,11 +674,11 @@ idealized world the correction is, for practical purposes, exact.
 With the cabinet edges, the residual grows: \twCorOne\,dB RMS for the tweeter and \sysCorOne\,dB for
 the summed loudspeaker at 1\,m, with local deviations up to \twmaxCorOne\,dB (Table~\ref{tab:errors},
 Figures~\ref{fig:errmaps1} and~\ref{fig:errmaps2}). Figure~\ref{fig:residuals} shows where: in the
-front half ($|\theta|\le90^\circ$) no angle exceeds 0.3\,dB RMS (0.2\,dB for the summed loudspeaker);
-the residual is behind the cabinet ($|\theta|\ge120^\circ$), at mid and high frequencies, where the edge
-waves dominate the response --- up to 1.3\,dB RMS at one angle for the tweeter at 1\,m, 3\,dB at
-2\,m. The
-woofer, whose band is low, is hardly affected.
+front half ($|\theta|\le90^\circ$) no angle exceeds 0.25\,dB RMS on the summed loudspeaker (0.55\,dB on
+the beaming midrange, the cost of the power interpolation seen above); the residual is behind the cabinet
+($|\theta|\ge120^\circ$), at mid and high frequencies, where the edge waves dominate the response --- up to
+1.2\,dB RMS at one angle for the tweeter at 1\,m, 2.9\,dB at 2\,m. The woofer, whose band is low, is hardly
+affected.
 
 Two mechanisms are at work. First, the edges are not at the driver: the correction moves the edge
 waves by the driver's change of distance, not by their own, so their timing relative to the direct
@@ -682,8 +737,10 @@ cabinet and changing sign from one frequency to the next, largely cancel (Figure
 Table~\ref{tab:cta}). Uncorrected, the centered setup lowers the sound power by up to 1.4\,dB at 1\,m
 (every off-axis microphone position is farther away), the PIR by up to \pirRawOne\,dB and shifts the
 directivity index by 1.2\,dB; at 2\,m these errors halve. Corrected, the PIR stays within
-\pirCorOne\,dB (1\,m) and \pirCorTwo\,dB (2\,m) of the rigorous one, the sound power within 0.13\,dB and
-the directivity index within 0.11\,dB.
+\pirCorOne\,dB (1\,m) and \pirCorTwo\,dB (2\,m) of the rigorous one, the sound power within 0.18\,dB and
+the directivity index within 0.15\,dB. Of those 0.18\,dB on the sound power, 0.15 come from the power
+interpolation's bias on the beaming drivers (they remain with the direct sound alone); interpolating the
+complex responses gives 0.14\,dB with the edges, and the PIR within \pirCpxOne\,dB.
 
 \begin{figure}[tbp]
   \centering
@@ -719,17 +776,23 @@ tape is good enough.
 The lateral offset itself is another matter. Because the microphone has been moved sideways to face
 the reference point, the model must know that the reference axis is $\ell=120$\,mm from the rotation
 axis, on the + side. Omitting it ($\ell=0$, i.e.\ correcting only for the depth, as for a symmetric
-loudspeaker) leaves the summed loudspeaker \sysLatZeroOne\,dB RMS off at 1\,m and the PIR up to
-\pirLatZeroOne\,dB off; entering it with the wrong sign is as bad (\pirLatSignOne\,dB). For the PIR,
-and for the tweeter (\twLatZeroOne\ and \twLatSignOne\,dB RMS against \twRawOne\,dB), both are worse
-than no correction at all (\pirRawOne\,dB). The sign convention matters: $\ell$ is positive when the
-reference axis lies on the side the microphone faces at $+90^\circ$. With the convention of this study
-(positive angles toward the tweeter side) the reference axis is on the + side; a turntable that
-counts angles the other way needs $\ell=-120$\,mm and a woofer offset of $+205$\,mm.
+loudspeaker) places the measurements up to $11^\circ$ and 110\,mm away from where they were taken, at
+1\,m, and leaves the summed loudspeaker \sysLatZeroOne\,dB RMS off, four times the residual with the
+right offset (\sysCorOne\,dB); entering it with the wrong sign doubles the error of placement ($21^\circ$,
+210\,mm) and gives \sysLatSignOne\,dB RMS (the tweeter \twLatSignOne\,dB against \twCorOne). The spatial averages hardly notice: the PIR stays within \pirLatZeroOne\ and
+\pirLatSignOne\,dB, against \pirCorOne\,dB. With the complex responses interpolated, the same mistakes were
+worse than no correction at all (the PIR 3.8 and 3.3\,dB off at 1\,m, against \pirRawOne\,dB uncorrected):
+the supports, moved with the wrong delays, no longer lined up in time and their complex mean cancelled.
+Interpolated as powers they do not cancel, and what remains is the wrong direction and level. The sign
+convention matters: $\ell$ is positive when the reference axis lies on the side the microphone faces at
+$+90^\circ$. With the convention of this study (positive angles toward the tweeter side) the reference
+axis is on the + side; a turntable that counts angles the other way needs $\ell=-120$\,mm and a woofer
+offset of $+205$\,mm.
 
 The woofer's own offset ($-205$\,mm) matters less: omitting it raises the woofer's error from
-\wfCorOne\ to 0.27\,dB RMS (1.7\,dB at worst) at 1\,m, and the summed loudspeaker hardly notices, the
-woofer being crossed over at 450\,Hz where its directivity varies slowly.
+\wfCorOne\ to 0.23\,dB RMS at 1\,m, and the summed loudspeaker hardly notices, the woofer being crossed
+over at 450\,Hz where its directivity varies slowly. Ignoring the drivers' heights changes nothing
+measurable.
 
 \begin{figure}[tbp]
   \centering
@@ -753,6 +816,40 @@ woofer being crossed over at 450\,Hz where its directivity varies slowly.
     & woofer & mid & tweeter & sum & PIR & woofer & mid & tweeter & sum & PIR\\
     \midrule
     \rows{variants}
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Rebuilt at 2\,m from measurements at 1\,m}
+\label{sec:distance}
+
+CTA-2034-A measures at 2\,m. Seen from there, a driver beside the reference axis is closer to the nominal
+angles than seen from 1\,m: the woofer, 205\,mm aside, is $11.6^\circ$ off its axis when the microphone is
+on the reference axis at 1\,m, $5.9^\circ$ at 2\,m. Rebuilding the 1\,m measurements as from the 2\,m circle
+(Section~\ref{sec:another}, the driver taken as symmetric about its axis for the change of angle across
+the plane, since only the horizontal orbit is measured; leaving that change out makes no difference
+here) fixes that geometry. Table~\ref{tab:distance}
+compares the results with the rigorous 2\,m data (levels brought back to 1\,m). The woofer's error falls
+from \distAsIsWf\,dB RMS (the rigorous 1\,m data used as they are) to \distRigRebuiltWf\,dB (the same data
+rebuilt) and \distRebuiltWf\,dB (the centered 1\,m data rebuilt); the summed loudspeaker from \distAsIsSys\
+to \distRebuiltSys\,dB, not far from the \distAtTwoSys\,dB of the 2\,m measurements corrected at 2\,m. The
+PIR, on the other hand, stays \distRebuiltPir\,dB off, against \distAtTwoPir\,dB measured at 2\,m: the
+cabinet's diffraction, heard from 1\,m, is not the one heard from 2\,m, and no point-source model moves it
+from one distance to the other. Section~\ref{sec:bemdistance} shows the same with the boundary-element
+solution, more clearly. The centered data come out closer to the 2\,m truth than the rigorous ones: behind
+the cabinet, where diffraction depends most on the distance, their microphone was farther away.
+
+\begin{table}[tbp]
+  \centering
+  \caption{Results at 2\,m against the rigorous 2\,m data: RMS level error per driver and for the summed
+  loudspeaker, and largest PIR deviation (dB), horizontal orbit, $10^\circ$ steps.}
+  \label{tab:distance}
+  \small
+  \begin{tabular}{lccccc}
+    \toprule
+    & woofer & mid & tweeter & sum & PIR\\
+    \midrule
+    \rows{distance}
     \bottomrule
   \end{tabular}
 \end{table}
@@ -819,7 +916,7 @@ public; the pressures at every microphone position are in the repository
   \item exterior Neumann problem of the Helmholtz equation around the closed cabinet, rigid, each
   driver's surface moving along its axis, the other one at rest (one right-hand side per driver);
   \item Burton--Miller formulation \cite{burtonmiller} (the direct integral equation combined with its
-  normal derivative, coupling $\alpha=-\jj/k$ for the time factor $e^{+\jj\omega t}$), so that no
+  normal derivative, with a coupling of modulus $1/k$), so that no
   frequency falls on an interior resonance of the box; Galerkin discretization, pressure piecewise
   linear and normal derivative piecewise constant on flat triangles, hypersingular operator in Maue's
   weak form, singular integrals by the Sauter--Schwab transformations \cite{sauter};
@@ -920,13 +1017,18 @@ baffle (Figure~\ref{fig:bempolars}). Behind the cabinet the patterns are finer s
 \end{table}
 
 \subsection{The correction on the BEM data}
+\label{sec:bemcorr}
 
 Table~\ref{tab:bemerrors} and Figures~\ref{fig:bemerrmaps} and~\ref{fig:bemresiduals} give the
 residuals; Table~\ref{tab:bemcta} the spatial averages.
 
-\paragraph{The woofer} is corrected as well as in the DED model of this two-way: \bemWfCorOne\,dB RMS at
-1\,m, \bemWfCorTwo\,dB at 2\,m. The low-frequency acoustic center ahead of the baffle does not get in
-the way: the spatial averages of the corrected data stay within 0.03\,dB of the rigorous ones up to
+\paragraph{The same two-way without its cabinet} (point sources in an infinite baffle, the DED model's
+direct term) is corrected to within \ptsSysCorOne\,dB RMS on the sum at 1\,m with $10^\circ$ steps, as the
+three-way's direct sound: what follows is the cabinet's doing.
+
+\paragraph{The woofer} is corrected about as well as in the DED model of this two-way: \bemWfCorOne\,dB
+RMS at 1\,m, \bemWfCorTwo\,dB at 2\,m. The low-frequency acoustic center ahead of the baffle does not get
+in the way: the spatial averages of the corrected data stay within 0.03\,dB of the rigorous ones up to
 1\,kHz.
 
 \paragraph{The tweeter and the summed loudspeaker} keep more than in the DED model: \bemTwCorOne\ and
@@ -940,66 +1042,137 @@ add up:
   \bemSysFiveOne\ and \bemSysFiveTwo, then \bemSysFineOne\ and \bemSysFineTwo\,dB
   (Figure~\ref{fig:bemconvergence}, Table~\ref{tab:bemconvergence}). With $10^\circ$ steps the residual
   is the same at 1, 2 and 4\,m (\bemSysCorOne, \bemSysCorTwo\ and \bemSysCorFour\,dB on the sum): the
-  interference patterns have the same angular period at every distance. At 4\,m it is nearly the
+  interference patterns have the same angular period at every distance. At 4\,m it is half the
   uncorrected error (\bemSysRawFour\,dB): on individual curves, interpolating across $10^\circ$ then costs
   about as much as the geometry gains.
-  \item \emph{Interpolating complex responses.} Where the two measurements that bracket a direction are
+  \item \emph{Powers or complex responses.} Where the two measurements that bracket a direction are
   no longer coherent --- the rear patterns at $10^\circ$ steps --- their complex mean cancels in part,
-  down to $-20$\,dB notches (Figure~\ref{fig:bempolars}, $-130^\circ$ around 6\,kHz). Interpolating the
-  re-propagated powers instead, $|\hat H|^2=\sum_k u_k\,|g_k H_k|^2$ with the phase of the complex
-  interpolation, avoids it: \bemTwLevOne\,dB RMS for the tweeter at 1\,m with $10^\circ$ steps,
-  \bemTwLevFiveOne\,dB with $5^\circ$ (Table~\ref{tab:bemerrors}). With $2.5^\circ$ steps the
-  neighbors are coherent again and both interpolations agree; in the DED model it makes no difference.
+  down to $-20$\,dB notches (Figure~\ref{fig:bempolars}, $-130^\circ$ around 6\,kHz). The interpolated
+  powers (Eq.~\ref{eq:powers}) avoid it: interpolating the complex responses instead leaves
+  \bemTwCpxOne\,dB RMS on the tweeter at 1\,m with $10^\circ$ steps, against \bemTwCorOne\,dB, and
+  \bemSysCpxOne\ against \bemSysCorOne\,dB on the sum (Table~\ref{tab:bemerrors}). With $2.5^\circ$ steps
+  the neighbors are coherent again and both interpolations agree; in the DED model it makes no
+  difference, and on the point sources the complex interpolation is slightly better (\ptsSysCpxOne\,dB on
+  the sum).
   \item \emph{Secondary sources.} The far edge, 330\,mm from the tweeter, re-radiates the sound that
   grazes the baffle; the correction moves that wave as if it came from the tweeter, so the ripple it
-  makes in front lands at the wrong angle. This part remains with fine steps: at 6.35\,kHz the
-  corrected response at $-30^\circ$ is 2.2\,dB low with $10^\circ$ steps, 1.1\,dB with $5^\circ$
-  (Figure~\ref{fig:bempolars}), and with $2.5^\circ$ steps the sum keeps \bemSysFineOne\,dB RMS at 1\,m.
-  It shrinks with distance: \bemSysFineTwo\,dB at 2\,m, \bemSysFineFour\,dB at 4\,m.
+  makes in front lands at the wrong angle. This part remains with fine steps: with $2.5^\circ$ steps the
+  sum keeps \bemSysFineOne\,dB RMS at 1\,m. It shrinks with distance: \bemSysFineTwo\,dB at 2\,m,
+  \bemSysFineFour\,dB at 4\,m.
 \end{itemize}
 
 \paragraph{Spatial averages.} Up to 3\,kHz the corrected CTA-2034-A curves remain within about 0.1\,dB of
 the rigorous ones, as in the DED model. Between 4 and 13\,kHz the residual concentrates in narrow bands:
 the PIR deviates by up to \bemPirCorOne\,dB at 1\,m and \bemPirCorTwo\,dB at 2\,m, the listening window by
-0.84 and 0.46\,dB (Figure~\ref{fig:bempir}, Table~\ref{tab:bemcta}); uncorrected, the PIR is
+0.82 and 0.44\,dB (Figure~\ref{fig:bempir}, Table~\ref{tab:bemcta}); uncorrected, the PIR is
 \bemPirRawOne\ and \bemPirRawTwo\,dB off. With $5^\circ$ steps the PIR comes within \bemPirFiveOne\,dB
-at 1\,m and \bemPirFiveTwo\,dB at 2\,m (\bemPirLevFiveOne\ and \bemPirLevFiveTwo\,dB with interpolated
-levels), with $2.5^\circ$ steps within \bemPirFineOne, \bemPirFineTwo\ and \bemPirFineFour\,dB at 1, 2
-and 4\,m.
+at 1\,m and \bemPirFiveTwo\,dB at 2\,m, with $2.5^\circ$ steps within \bemPirFineOne, \bemPirFineTwo\ and
+\bemPirFineFour\,dB at 1, 2 and 4\,m. Part of those tenths belongs to the standard's own sampling: the
+far edge's ripple has a period close to $10^\circ$ in front at 6--8\,kHz, and the rigorous listening
+window computed from its seven $10^\circ$ directions differs by up to 0.6--0.7\,dB at 7--8\,kHz from the
+same window averaged over every $2.5^\circ$.
 
 \paragraph{The vertical orbit} measured with the cabinet on its side needs the depth only: the drivers are
-level with the axis, and the woofer, 205\,mm off the orbit's plane, is treated as if it were in it
-(Table~\ref{tab:bemvertical}). Uncorrected, the sum is \bemSysVertRawOne\,dB RMS off at 1\,m;
-corrected, \bemSysVertCorOne\,dB with $10^\circ$ steps and \bemSysVertFiveOne\,dB with $5^\circ$ (DED:
+level with the axis, and the woofer is 205\,mm beside the orbit's plane, which the distances in 3D take
+into account (Table~\ref{tab:bemvertical}). Uncorrected, the sum is \bemSysVertRawOne\,dB RMS off at
+1\,m; corrected, \bemSysVertCorOne\,dB with $10^\circ$ steps and \bemSysVertFiveOne\,dB with $5^\circ$ (DED:
 \dedSysVertCorOne\ and \dedSysVertFiveOne\,dB): the top and bottom edges, 145\,mm from the drivers, play
 the part of the far edge. The woofer's offset from the plane costs little: \bemWfVertCorOne\,dB RMS
-corrected.
+corrected, \bemWfVertFlatOne\,dB when it is taken as in the plane.
 
 \paragraph{Both orbits,} as CTA-2034-A measures them, both on the turntable and both corrected: the PIR is
 within \bemPirBothCorOne\,dB at 1\,m, \bemPirBothCorTwo\,dB at 2\,m and \bemPirBothCorFour\,dB at 4\,m
-with $10^\circ$ steps, \bemPirBothLevFiveOne, \bemPirBothLevFiveTwo\ and \bemPirBothLevFiveFour\,dB with
-$5^\circ$ steps and interpolated levels; uncorrected, \bemPirBothRawOne, \bemPirBothRawTwo\ and
-\bemPirBothRawFour\,dB (Table~\ref{tab:bemcta2}). The DED model of the same two-way puts the corrected
-PIR within \dedPirBothCorOne\,dB at 1\,m.
+with $10^\circ$ steps, \bemPirBothFiveOne, \bemPirBothFiveTwo\ and \bemPirBothFiveFour\,dB with
+$5^\circ$ steps, \bemPirBothFineOne, \bemPirBothFineTwo\ and \bemPirBothFineFour\,dB with $2.5^\circ$;
+uncorrected, \bemPirBothRawOne, \bemPirBothRawTwo\ and \bemPirBothRawFour\,dB (Table~\ref{tab:bemcta2}).
+The DED model of the same two-way puts the corrected PIR within \dedPirBothCorOne\,dB at 1\,m.
 
 \paragraph{Parameters.} The conclusions of Section~\ref{sec:variants} stand (Table~\ref{tab:bemvariants}):
 an error of $\pm10$\,mm on the depth or on the lateral offset, or of 20\,mm on the distance, changes the
-PIR by less than 0.1\,dB; omitting the lateral offset, or giving it the wrong sign, puts the PIR
-\bemPirLatZeroOne\ or \bemPirLatSignOne\,dB off at 1\,m, worse than no correction (\bemPirRawOne\,dB).
-Crossed over at 2\,kHz instead of 450\,Hz, the woofer needs its own offset more than in the three-way:
-without it, \bemWfWfZeroOne\,dB RMS instead of \bemWfCorOne.
+PIR by less than 0.1\,dB; omitting the lateral offset, or giving it the wrong sign, leaves the sum
+\bemSysLatZeroOne\ or \bemSysLatSignOne\,dB RMS off at 1\,m, two to three times the residual, while the
+PIR hardly moves (\bemPirLatZeroOne\ and \bemPirLatSignOne\,dB, against \bemPirCorOne). Crossed over at
+2\,kHz instead of 450\,Hz, the woofer needs its own offset a little more than in the three-way: without it,
+\bemWfWfZeroOne\,dB RMS instead of \bemWfCorOne.
+
+\paragraph{The whole loudspeaker.} Measured at once, through its crossover, and corrected as one source at
+the reference point (the tweeter), the two-way keeps \bemSysWholeOne\,dB RMS on the horizontal orbit at 1\,m
+with $10^\circ$ steps, against \bemSysCorOne\,dB with each driver measured and corrected on its own, and
+\bemSysWholeFineOne\ against \bemSysFineOne\,dB with $2.5^\circ$ steps; the PIR from both orbits is within
+\bemPirBothWholeOne\,dB (\bemPirBothCorOne\,dB). The difference sits around the crossover:
+\bemSysXoWholeOne\ against \bemSysXoCorOne\,dB RMS between 1 and 4\,kHz. Corrected at once, the woofer and
+the tweeter keep the relative delay of the position the microphone was at; with the powers interpolated, that
+error cancels nothing. It should grow with the drivers' distance from the reference point, relative to the
+microphone distance (not simulated here). The drivers measured on their own remain the cleaner way, and the
+one a crossover is designed from.
+
+\subsection{At another distance}
+\label{sec:bemdistance}
+
+The data hold the same orbits at 1, 2 and 4\,m, so the results rebuilt at a larger distance than measured
+(Section~\ref{sec:another}) can be checked against the rigorous data at that distance, each orbit with the
+other's measurements for the angles across its plane. Table~\ref{tab:bemdistance} gives the RMS error of
+the sum on both orbits and the largest deviation of the PIR from both orbits, with $10^\circ$ and $2.5^\circ$
+steps.
+
+Rebuilt at 2\,m, the centered 1\,m data come out about twice as close to the rigorous 2\,m data as the
+rigorous 1\,m data themselves: \distOneTwoRebSys\,dB RMS on the sum of the horizontal orbit against
+\distOneTwoAsIsSys\,dB, the PIR within \distOneTwoRebPir\ against \distOneTwoAsIsPir\,dB. But measured at
+2\,m and corrected there, with $2.5^\circ$ steps, the sum is within \distOneTwoThereFineSys\,dB and the PIR
+within \distOneTwoThereFinePir\,dB, where the 1\,m data rebuilt keep \distOneTwoRebFineSys\ and
+\distOneTwoRebFinePir\,dB whatever the step. What the rebuild cannot move is the cabinet's near field:
+\begin{itemize}
+  \item at low frequency, the acoustic center about 130\,mm ahead of the baffle: going from 1 to 2\,m, the
+  level falls by $20\log_{10}\frac{2-0.13}{1-0.13}=6.6$\,dB in front and 5.5\,dB behind, not 6.0\,dB;
+  the rebuilt woofer is $\pm0.3$\,dB RMS off below 1\,kHz, in front and behind;
+  \item at high frequency, the diffraction pattern, whose rear lobes and far-edge ripple differ between
+  1 and 2\,m: between 4 and 16\,kHz the rebuilt sum keeps 0.8\,dB RMS in front and 1.6\,dB behind.
+\end{itemize}
+Without the cabinet (point sources, Table~\ref{tab:bemdistance} does not show them), the rebuild is exact
+to within 0.1\,dB. For the vertical orbit, where the woofer is 205\,mm beside the plane and seen at
+$11.6^\circ$ across it from 1\,m but $5.9^\circ$ from 2\,m, the horizontal orbit's measurements give that
+change of angle. The sum hardly moves (\distOneTwoRebVSys\,dB RMS off with them,
+\distOneTwoPlainVSys\,dB without), and the three-way's domes, $\pm65$\,mm from the plane, not at all
+(Table~\ref{tab:distance}). The woofer's error between 200\,Hz and 1\,kHz even grows, from 0.23 to
+0.31\,dB RMS, though the factor is right. Where the two orbits meet, the vertical one's rebuilt woofer now
+agrees with the horizontal one's: its mean error in that band is $+0.01$\,dB in front and $-0.52$\,dB
+behind, against $+0.01$ and $-0.55$\,dB on the horizontal orbit, where no factor acts ($+0.08$ and
+$-0.24$\,dB without the factor). The half decibel lost behind the cabinet is the distance model's: the
+level there does not fall as from the cone (the first item above). Left as measured, the angle across the
+plane happened to make up half of it on the vertical orbit. The correction matters for drivers farther from the plane and closer to the microphone: a
+woofer 250\,mm under the tweeter is seen $14^\circ$ off the plane at 1\,m and $7^\circ$ at 2\,m.
 
 \begin{table}[tbp]
   \centering
-  \caption{Level error of the two-way, BEM and DED, horizontal orbit at 1, 2 and 4\,m: uncorrected,
-  corrected ($10^\circ$ steps), corrected with interpolated levels ($10^\circ$), corrected with $5^\circ$
-  steps (dB, over the relevant points).}
+  \caption{The BEM two-way at a larger distance than measured, against the rigorous data at that
+  distance (levels brought back to the measurement distance): RMS level error of the sum, horizontal
+  (H) and vertical (V) orbits, and largest PIR deviation from both orbits, 100\,Hz--16\,kHz (dB). The
+  last row of each group is measured at the larger distance and corrected there.}
+  \label{tab:bemdistance}
+  \small
+  \begin{tabular}{lcccccc}
+    \toprule
+    & \multicolumn{3}{c}{$10^\circ$ steps} & \multicolumn{3}{c}{$2.5^\circ$ steps}\\
+    \cmidrule(lr){2-4}\cmidrule(lr){5-7}
+    & sum, H & sum, V & PIR & sum, H & sum, V & PIR\\
+    \midrule
+    \rows{bem_distance}
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[tbp]
+  \centering
+  \caption{Level error of the two-way, BEM, DED and point sources (the DED model's direct term), horizontal
+  orbit at 1, 2 and 4\,m: uncorrected, corrected ($10^\circ$ steps), corrected with the complex responses
+  interpolated instead of the powers ($10^\circ$), corrected with $5^\circ$ steps (dB, over the relevant
+  points).}
   \label{tab:bemerrors}
   \small
   \setlength{\tabcolsep}{4pt}
   \begin{tabular}{lllccccccccccc}
     \toprule
-    & & & \multicolumn{3}{c}{uncorrected} & \multicolumn{3}{c}{corrected} & \multicolumn{2}{c}{levels}
+    & & & \multicolumn{3}{c}{uncorrected} & \multicolumn{3}{c}{corrected} & \multicolumn{2}{c}{complex}
     & \multicolumn{2}{c}{$5^\circ$ steps}\\
     \cmidrule(lr){4-6}\cmidrule(lr){7-9}\cmidrule(lr){10-11}\cmidrule(lr){12-13}
     $d$ & model & & RMS & P95 & max & RMS & P95 & max & RMS & max & RMS & max\\
@@ -1020,8 +1193,8 @@ without it, \bemWfWfZeroOne\,dB RMS instead of \bemWfCorOne.
   \centering
   \includegraphics[width=\textwidth]{bem_residuals.pdf}
   \caption{RMS level error of the corrected data at each angle, at 1, 2 and 4\,m: BEM with $10^\circ$
-  steps, with interpolated levels, with $5^\circ$ and $2.5^\circ$ steps, and the DED model of the same
-  two-way. Negative angles are on the woofer's side.}
+  steps, the same with the complex responses interpolated instead of the powers, BEM with $5^\circ$ and
+  $2.5^\circ$ steps, and the DED model of the same two-way. Negative angles are on the woofer's side.}
   \label{fig:bemresiduals}
 \end{figure}
 
@@ -1051,7 +1224,7 @@ without it, \bemWfWfZeroOne\,dB RMS instead of \bemWfCorOne.
   \centering
   \caption{The same with both orbits, as CTA-2034-A measures them, both measured on the turntable (the
   vertical one with the cabinet on its side): uncorrected, corrected ($10^\circ$ steps), and corrected
-  with $5^\circ$ steps and interpolated levels (dB).}
+  with $5^\circ$ steps (dB).}
   \label{tab:bemcta2}
   \small
   \begin{tabular}{llllcccccc}
@@ -1082,8 +1255,8 @@ without it, \bemWfWfZeroOne\,dB RMS instead of \bemWfCorOne.
 \begin{figure}[tbp]
   \centering
   \includegraphics[width=\textwidth]{bem_convergence.pdf}
-  \caption{Residual of the corrected two-way against the angular step, at 1, 2 and 4\,m: BEM, BEM with
-  interpolated levels, and the DED model. Horizontal orbit.}
+  \caption{Residual of the corrected two-way against the angular step, at 1, 2 and 4\,m: BEM, BEM with the
+  complex responses interpolated instead of the powers, and the DED model. Horizontal orbit.}
   \label{fig:bemconvergence}
 \end{figure}
 
@@ -1138,53 +1311,65 @@ of the BEM two-way from both orbits at 1\,m.
 \subsection{What changes}
 
 The BEM confirms what the correction does below about 3\,kHz, where the woofer and the crossover region
-are: the spatial averages of the corrected data match the rigorous ones within 0.1\,dB and the lateral
-offset is critical. Above, the rigid dome sends more sound to the cabinet's edges than the DED model
-assumes, the polar patterns carry finer interference ripples, and with $10^\circ$ steps the correction
-leaves about 1.5\,dB RMS on the tweeter's individual curves at any distance, and up to about 0.6\,dB on
-the PIR in narrow bands at 1\,m (0.4\,dB at 2\,m). That residual is mostly the angular step: with
-$2.5^\circ$ steps it falls to 0.2\,dB RMS on the tweeter and 0.1\,dB on the PIR at 2 and 4\,m. At 1\,m
-about 0.4\,dB RMS remains on the sum whatever the step, the share of the edges' finite-distance
-geometry. The vertical orbit, measured with the cabinet on its side, corrects the same way.
+are: the spatial averages of the corrected data match the rigorous ones within 0.1\,dB. Above, the rigid
+dome sends more sound to the cabinet's edges than the DED model assumes, the polar patterns carry finer
+interference ripples, and with $10^\circ$ steps the correction leaves about 1\,dB RMS on the tweeter's
+individual curves at any distance, and up to about 0.55\,dB on the PIR in narrow bands at 1\,m (0.3\,dB at
+2\,m). That residual is mostly the angular step: with $2.5^\circ$ steps it falls to 0.2\,dB RMS on the
+tweeter and 0.1\,dB on the PIR at 2 and 4\,m. At 1\,m about 0.4\,dB RMS remains on the sum whatever the
+step, the share of the edges' finite-distance geometry. The vertical orbit, measured with the cabinet on its
+side, corrects the same way. Rebuilt at a larger distance than measured, the data keep the cabinet's near
+field.
 
 % =============================================================================================
 \section{Discussion}
 
 \paragraph{The geometry is the easy part.} For the direct sound of each driver the correction is
 exact up to interpolation, and the angular interpolation of a $10^\circ$ orbit is good enough
-(below 0.1\,dB RMS). The out-of-plane offsets between the drivers and the microphone, which the planar
-model ignores, do not matter at 1\,m.
+(about 0.1\,dB RMS). The drivers' heights relative to the microphone do not matter at 1\,m.
 
 \paragraph{Diffraction is the limit, mostly behind the cabinet.} The edge waves come from the baffle
 edges, not from the driver; the correction re-times them as if they did. In this simulation the
 consequence is small in front of the loudspeaker and grows behind it, at mid and high frequencies,
 where the edge waves are the response. Spatial averages are barely affected: the PIR of the corrected
 data is within about 0.1\,dB of the rigorous one. Individual rear curves can show local deviations of a
-few dB in narrow bands. The boundary-element
-check (Section~\ref{sec:bem}) shows that the DED model underestimates that diffraction for a dome
-tweeter: the rigid dome radiates wider, more sound reaches the edges, and the residual grows above
-3\,kHz, in front on the side of the far edge as well as behind --- up to about 0.6\,dB on the PIR in
-narrow bands at 1\,m with $10^\circ$ steps, 0.15\,dB with $2.5^\circ$ steps. Below 3\,kHz the BEM confirms
-the DED results.
+few dB in narrow bands. The boundary-element check (Section~\ref{sec:bem}) shows that the DED model
+underestimates that diffraction for a dome tweeter: the rigid dome radiates wider, more sound reaches the
+edges, and the residual grows above 3\,kHz, in front on the side of the far edge as well as behind --- up to
+about 0.55\,dB on the PIR in narrow bands at 1\,m with $10^\circ$ steps, 0.15\,dB with $2.5^\circ$ steps. Below
+3\,kHz the BEM confirms the DED results.
 
-\paragraph{1\,m or 2\,m.} At 2\,m the raw errors are halved and the finite-distance part of the
-diffraction error shrinks, but the angular-interpolation part does not; a finer orbit
-($5^\circ$) is then the effective remedy. In a real room the choice is also about the reflection-free
-time window, which shrinks with distance --- outside the scope of this free-field study. In the BEM data the part no step removes is
-\bemSysFineOne\,dB RMS on the sum at 1\,m, \bemSysFineTwo\,dB at 2\,m and \bemSysFineFour\,dB at 4\,m
-($2.5^\circ$ steps), while with $10^\circ$ steps the residual stays near 1\,dB at every distance.
+\paragraph{The angular step.} With $10^\circ$ steps the residual on individual curves stays near 0.6\,dB RMS
+on the sum at every distance, because the interference patterns keep their angular period; $5^\circ$ steps
+take a third off at 1\,m and halve it at 2 and 4\,m, $2.5^\circ$ steps leave \bemSysFineOne\,dB at 1\,m,
+\bemSysFineTwo\,dB at 2\,m and \bemSysFineFour\,dB at 4\,m. Even the rigorous $10^\circ$ data average the far
+edge's ripple at a few points of its period: their listening window differs by up to 0.6--0.7\,dB from a
+dense average at 7--8\,kHz.
 
-\paragraph{Interpolate levels.} Where the angular step undersamples the pattern, the two measurements
+\paragraph{Interpolate powers.} Where the angular step undersamples the pattern, the two measurements
 that bracket a direction are not coherent and the linear interpolation of complex responses cancels in
 part, with artificial notches. Interpolating the re-propagated powers, keeping the phase of the complex
-interpolation, removes them; on the BEM data it halves the residual of the tweeter with $10^\circ$ steps
-and costs nothing where the data are well sampled ($2.5^\circ$).
+interpolation, removes them; on the BEM data it halves the residual of the individual curves with
+$10^\circ$ steps and changes nothing where the data are well sampled ($2.5^\circ$). It has a small price on a
+well-sampled main lobe, where the mean of the powers reads slightly high: 0.1\,dB RMS on the direct sound
+of the summed three-way instead of 0.03\,dB, and 0.15\,dB on its sound power.
 
-\paragraph{The lateral offset is the trap.} The model handles the laterally shifted microphone,
-provided the lateral offset is entered, with the right sign. A wrong or missing lateral offset is
-worse than no correction. A quick check: at $+90^\circ$ the microphone must face the side counted as
-positive, and the reference axis of a layout like this one lies on that side if the microphone moves
-toward the tweeter at positive angles.
+\paragraph{The lateral offset.} The model handles the laterally shifted microphone, provided the lateral
+offset is entered, with the right sign. Missing or with the wrong sign, it places the measurements up to
+$11^\circ$ or $21^\circ$ away from where they were taken at 1\,m, and the individual curves keep two to seven
+times the residual error. With the powers interpolated, the spatial averages hardly notice; with the
+complex responses interpolated, the same mistakes made the PIR worse than no correction. A quick check: at
+$+90^\circ$ the microphone must face the side counted as positive, and the reference axis of a layout like
+this one lies on that side if the microphone moves toward the tweeter at positive angles.
+
+\paragraph{1\,m, 2\,m, or 1\,m rebuilt at 2\,m.} At 2\,m the raw errors are halved and the finite-distance
+part of the diffraction error shrinks, but the angular-interpolation part does not; a finer orbit is then
+the effective remedy. Rebuilding 1\,m measurements as seen from 2\,m fixes the drivers' geometry (a woofer
+beside the reference axis is seen from the right angles) but not the cabinet's near field: its
+low-frequency acoustic center ahead of the baffle and its diffraction, both different at 1 and 2\,m. On the
+BEM two-way the rebuilt data keep about 0.65\,dB RMS on the sum and 0.35\,dB on the PIR, where 2\,m
+measurements with $2.5^\circ$ steps reach 0.14 and 0.06\,dB. In a real room the choice is also about the
+reflection-free time window, which shrinks with distance --- outside the scope of this free-field study.
 
 \paragraph{Limits of the study.}
 \begin{itemize}
@@ -1199,7 +1384,7 @@ toward the tweeter at positive angles.
   The acoustic centers are on the baffle plane: a real acoustic center behind or in front of the baffle
   acts like a depth error for that driver; $\pm10$\,mm of depth error costs little here, and the
   low-frequency acoustic center, 130\,mm ahead of the baffle in the BEM, does not disturb the
-  correction.
+  correction at the measurement distance.
   \item The vertical orbit, measured with the loudspeaker on its side (depth 145\,mm, no lateral offset),
   was simulated for the two-way only (Table~\ref{tab:bemvertical}); the three-way's CTA-2034-A curves are
   horizontal-orbit estimates.
@@ -1213,11 +1398,13 @@ toward the tweeter at positive angles.
   axis) to within about 1\,cm; note on which side the microphone faces at $+90^\circ$ and give the
   lateral offset that sign.
   \item Give every driver its offset from the reference axis in the plane of rotation --- a woofer
-  beside the tweeter in a horizontal cabinet is not at 0.
+  beside the tweeter in a horizontal cabinet is not at 0 --- and its height relative to the microphone.
+  \item Interpolate the powers between measured directions, not the complex responses.
   \item Use the finest step you can afford if the responses above a few kHz matter: with this cabinet,
-  $10^\circ$ steps leave about 1.5\,dB RMS on the tweeter's curves at any distance, $5^\circ$ halves it,
-  $2.5^\circ$ brings it to 0.2\,dB at 2\,m. With coarse steps, interpolate levels rather than complex
-  responses. Prefer 2\,m to 1\,m.
+  $10^\circ$ steps leave about 1\,dB RMS on the tweeter's curves at any distance, $5^\circ$ takes a third to a
+  half off, $2.5^\circ$ brings it to 0.2\,dB at 2\,m.
+  \item Measure at the distance you want the results at when the room allows it: rebuilt from 1\,m, 2\,m
+  data keep the cabinet's near field.
   \item Treat rear responses at mid and high frequencies as approximate (cabinet diffraction). Spatial
   averages (sound power, PIR, DI) are robust: within about 0.1\,dB below 3\,kHz, a few tenths of a dB
   in narrow bands above.
@@ -1230,15 +1417,16 @@ toward the tweeter at positive angles.
 On a small turntable the cabinet is centered and the microphone moved sideways to face the reference
 point; uncorrected, the off-axis data are too low (up to 2.5\,dB behind the cabinet at 1\,m), late and
 seen from the wrong direction, and the PIR is about 1\,dB low. A geometric correction --- each driver a
-point source with directivity, re-propagated and interpolated --- restores them: essentially exactly
-for the direct sound, and to within a few tenths of a dB RMS once the cabinet's edge diffraction is
-included, the residual being concentrated behind the cabinet at mid and high frequencies. The spatial
+point source with directivity, re-propagated in 3D and its powers interpolated --- restores them: nearly
+exactly for the direct sound, and to within a few tenths of a dB RMS once the cabinet's edge diffraction
+is included, the residual being concentrated behind the cabinet at mid and high frequencies. The spatial
 averages of CTA-2034-A, PIR included, come within about 0.1\,dB of the rigorous ones. A boundary-element
 solution of a two-way in the same cabinet confirms this below about 3\,kHz; above, the dome tweeter
 drives the cabinet's edges harder than the edge model assumes, and the corrected PIR deviates by up to
-about 0.6\,dB in narrow bands at 1\,m (0.4\,dB at 2\,m) with $10^\circ$ steps; $2.5^\circ$ steps bring it to
-0.15\,dB at 1\,m and 0.1\,dB at 2\,m. The method is only as good as its parameters, and one of them is critical: the lateral offset of
-the reference axis, with its sign.
+about 0.55\,dB in narrow bands at 1\,m (0.3\,dB at 2\,m) with $10^\circ$ steps; $2.5^\circ$ steps bring it to
+0.15\,dB at 1\,m and 0.1\,dB at 2\,m. The lateral offset of the reference axis, with its sign, still decides
+how good the individual curves are. And a polar measurement is best taken at the distance it will be used
+at: rebuilt at another distance, it keeps the cabinet's near field.
 
 \appendix
 
@@ -1269,17 +1457,18 @@ from the boundary-element pressures for Section~\ref{sec:bem}:
   \item \texttt{rotcenter/}: geometry and kinematics, radiators, driver models, DED diffraction, the
   correction (time and frequency domains), CTA-2034-A averages (one or both orbits), crossovers,
   metrics, the two-way variant;
-  \item \texttt{scripts/run\_study.py}: all simulated measurements of the three-way ($\approx$\,5\,min);
+  \item \texttt{scripts/run\_study.py}: all simulated measurements of the three-way ($\approx$\,1.5\,min);
   \item \texttt{data/bem/}: the BEM pressures of the two-way (\texttt{two\_way.npz}: each driver,
-  per unit volume velocity, at the 432 microphone positions of \texttt{points.json} and the \bemFreqs\
-  frequencies, with the mesh size and the time of each solve), and \texttt{scripts/import\_bem.py}, which
-  wrote it from the solver's report;
-  \item \texttt{scripts/run\_bem.py}: the two-way, BEM and DED, all cases ($\approx$\,30\,s);
+  per unit volume velocity, at the \bemPoints\ microphone positions of \texttt{points.json} and the
+  \bemFreqs\ frequencies, with the mesh size and the time of each solve), and \texttt{scripts/import\_bem.py},
+  which wrote it from the solver's report;
+  \item \texttt{scripts/run\_bem.py}: the two-way, BEM, DED and point sources, all cases ($\approx$\,1\,min);
   \item \texttt{scripts/make\_figures.py} and \texttt{scripts/make\_bem\_figures.py}: figures and
   tables;
   \item \texttt{scripts/make\_schematics.py}: the schematics;
   \item \texttt{tests/}: unit tests (kinematics, directivities, DED normalization, correction of an
-  ideal point source, time and frequency domains, crossovers, CTA-2034-A curves, the two-way's
+  ideal point source in 3D and at another distance, the change of angle across the plane, the powers
+  interpolated, symmetry copies, time and frequency domains, crossovers, CTA-2034-A curves, the two-way's
   microphone positions against the BEM data).
 \end{itemize}
 The boundary-element solver itself (Huygens) is not public.

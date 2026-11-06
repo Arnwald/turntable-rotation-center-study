@@ -41,7 +41,7 @@ BEM_VERTICAL = "bem/1m/v-corrected/system/power" in DATA.files
 DRIVERS = ("woofer", "tweeter")
 ALL = DRIVERS + ("system",)
 LABELS = {"woofer": "woofer", "tweeter": "tweeter", "system": "2-way sum"}
-MODELS = {"bem": "BEM", "ded": "DED"}
+MODELS = {"bem": "BEM", "ded": "DED", "pts": "point sources"}
 CASES = ("rigorous", "raw", "corrected")
 BANDS = twoway.BANDS
 SPL0 = 10.0 * np.log10(P_REF**2)
@@ -58,7 +58,7 @@ def get(model, tag, case, drv):
 
 
 def suffix_of(case):
-    return case[-1] if case[-1] in "52" else ""
+    return case[-1] if case[-1] in "52" and not case.endswith("m") else ""
 
 
 def angles_of(case):
@@ -339,7 +339,7 @@ def fig_residuals():
     fig, axes = plt.subplots(len(TAGS), 3, figsize=(7.0, 1.85 * len(TAGS)), sharex=True, sharey="row",
                              squeeze=False)
     curves = [("bem", "corrected", "BEM, 10° steps", ps.SLOTS[0], "-"),
-              ("bem", "levels", "BEM, 10° steps, levels interpolated", ps.SLOTS[3], "-."),
+              ("bem", "complex", "BEM, 10° steps, complex responses interpolated", ps.SLOTS[3], "-."),
               ("bem", "corrected5", "BEM, 5° steps", ps.SLOTS[1], "--"),
               ("ded", "corrected", "DED, 10° steps", ps.SLOTS[2], ":")]
     if "2" in ANGLES:
@@ -452,10 +452,10 @@ VARIANT_LABELS = {
     "raw": "no correction",
     "corrected": "true parameters",
     "corrected5": "true parameters, 5° steps",
-    "levels": "levels interpolated",
-    "levels5": "levels interpolated, 5° steps",
+    "complex": "complex interpolation",
+    "complex5": "complex interpolation, 5° steps",
     "corrected2": "true parameters, 2.5° steps",
-    "levels2": "levels interpolated, 2.5° steps",
+    "complex2": "complex interpolation, 2.5° steps",
     "lateral_omitted": "lateral offset omitted (0)",
     "lateral_sign": "lateral offset, wrong sign",
     "woofer_offset_omitted": "woofer offset omitted (0)",
@@ -493,10 +493,10 @@ def convergence_numbers():
     """RMS level error of the corrected sum and tweeter, and the largest PIR deviation, for each
     angular step, distance and interpolation."""
     out = {}
-    for model in MODELS:
+    for model in ("bem", "ded"):
         for tag in TAGS:
             ref = cta_h(model, tag, "rigorous")
-            for kind in ("corrected", "levels"):
+            for kind in ("corrected", "complex"):
                 for suffix in SUFFIXES:
                     case = kind + suffix
                     row = {name: error_summary(model, tag, case, name)["rms"] for name in ("system", "tweeter")}
@@ -505,7 +505,8 @@ def convergence_numbers():
     return out
 
 
-CONVERGENCE_LINES = (("bem", "corrected", "BEM", "-", "o"), ("bem", "levels", "BEM, levels interpolated", "-.", "s"),
+CONVERGENCE_LINES = (("bem", "corrected", "BEM", "-", "o"),
+                     ("bem", "complex", "BEM, complex responses interpolated", "-.", "s"),
                      ("ded", "corrected", "DED", ":", "^"))
 
 
@@ -538,17 +539,66 @@ def fig_convergence(conv):
     plt.close(fig)
 
 
-def tables(numbers, ded_numbers, dvb, conv):
+#: Measured at one distance, rebuilt at a larger one.
+REBUILT = [(tag, at) for tag, at in (("1m", "2m"), ("1m", "4m"), ("2m", "4m"))
+           if f"bem/{tag}/corrected@{at}/system/power" in DATA.files]
+#: The cases compared with the rigorous data at the larger distance: the measurements as they are,
+#: rebuilt there, and measured there.
+DISTANCE_CASES = (("asis", "rigorous, used as measured"), ("rigorous", "rigorous, rebuilt"),
+                  ("corrected", "centered, rebuilt"), ("there", "centered at that distance, corrected"))
+
+
+def distance_case(tag, at, kind, suffix, prefix=""):
+    """``(tag, case, scale)`` of a case at the larger distance ``at``: its data, and the power factor
+    that brings the rigorous data at ``at`` to its level (the reference point keeps its level)."""
+    scale = (float(at[0]) / float(tag[0])) ** 2
+    if kind == "asis":
+        return tag, f"{prefix}rigorous{suffix}", scale
+    if kind == "there":
+        return at, f"{prefix}corrected{suffix}", 1.0
+    return tag, f"{prefix}{kind}@{at}{suffix}", scale
+
+
+def distance_numbers(model="bem"):
+    """RMS level error of each driver and of the sum on both orbits, and the largest deviation of the
+    PIR from both orbits, against the rigorous data at the larger distance."""
+    out = {}
+    for tag, at in REBUILT:
+        for suffix in SUFFIXES:
+            ref = cta_hv(model, at, "rigorous" + suffix, "v-rigorous" + suffix)
+            for kind, _ in DISTANCE_CASES:
+                row = {}
+                for prefix in ("", "v-"):
+                    t, case, scale = distance_case(tag, at, kind, suffix, prefix)
+                    for name in ALL:
+                        row[prefix + name] = summary(get(model, t, case, name),
+                                                     scale * get(model, at, prefix + "rigorous" + suffix, name),
+                                                     F, angles_of(case), BANDS[name])["rms"]
+                t, h, scale = distance_case(tag, at, kind, suffix)
+                _, v, _ = distance_case(tag, at, kind, suffix, "v-")
+                c = cta_hv(model, t, h, v)
+                row["pir"] = float(np.max(np.abs(ps.db10(c["pir"] / (scale * ref["pir"])))[CTA_BAND]))
+                out[(tag, at, kind, suffix)] = row
+            # The vertical orbit without the horizontal one's measurements across it.
+            scale = (float(at[0]) / float(tag[0])) ** 2
+            out[(tag, at, "plain", suffix)] = {
+                "v-" + name: summary(get(model, tag, f"v-plain@{at}{suffix}", name),
+                                     scale * get(model, at, "v-rigorous" + suffix, name), F, ANGLES[suffix],
+                                     BANDS[name])["rms"] for name in ALL}
+    return out
+
+
+def tables(numbers, ded_numbers, dvb, conv, dist=None, pts_numbers=None):
     TAB.mkdir(parents=True, exist_ok=True)
     with open(TAB / "bem_errors.tex", "w") as fh:
         for tag in TAGS:
-            for model in ("bem", "ded"):
+            for model in ("bem", "ded", "pts"):
                 for name in ALL:
                     cells = []
                     for case in ("raw", "corrected"):
                         s = error_summary(model, tag, case, name)
                         cells.append(f"{s['rms']:.2f} & {s['p95']:.2f} & {s['max']:.1f}")
-                    for case in ("levels", "corrected5"):
+                    for case in ("complex", "corrected5"):
                         s = error_summary(model, tag, case, name)
                         cells.append(f"{s['rms']:.2f} & {s['max']:.1f}")
                     fh.write(f"{tag[0]}\\,m & {MODELS[model]} & {LABELS[name]} & " + " & ".join(cells) + " \\\\\n")
@@ -585,7 +635,7 @@ def tables(numbers, ded_numbers, dvb, conv):
         rows = [(model, h, v, hl, vl) for model in ("bem", "ded") for h, v, hl, vl in (
             ("raw", "v-raw", "uncorrected", "uncorrected"),
             ("corrected", "v-corrected", "corrected", "corrected"),
-            ("levels5", "v-levels5", "levels, 5°", "levels, 5°"))]
+            ("corrected5", "v-corrected5", "corrected, 5°", "corrected, 5°"))]
     else:
         rows = [("bem", "raw", "v-rigorous", "uncorrected", "rigorous"),
                 ("bem", "corrected", "v-rigorous", "corrected", "rigorous"),
@@ -610,6 +660,17 @@ def tables(numbers, ded_numbers, dvb, conv):
                     cells += [f"{error_summary(model, tag, case, name)['rms']:.2f}"
                               for case in ("v-raw", "v-corrected", "v-corrected5")]
                 fh.write(f"{tag[0]}\\,m & {MODELS[model]} & " + " & ".join(cells) + " \\\\\n")
+    if dist:
+        with open(TAB / "bem_distance.tex", "w") as fh:
+            for tag, at in REBUILT:
+                fh.write(f"\\multicolumn{{7}}{{l}}{{\\emph{{measured at {tag[0]}\\,m, results at {at[0]}\\,m}}}} \\\\\n")
+                for kind, label in DISTANCE_CASES:
+                    cells = []
+                    for suffix in ("", SUFFIXES[-1]):
+                        r = dist[(tag, at, kind, suffix)]
+                        cells.append(f"{r['system']:.2f} & {r['v-system']:.2f} & {r['pir']:.2f}")
+                    fh.write(f"\\quad {label} & " + " & ".join(cells) + " \\\\\n")
+                fh.write("\\addlinespace\n")
     with open(TAB / "bem_dedvsbem.tex", "w") as fh:
         for tag in TAGS:
             for name in ALL:
@@ -619,11 +680,11 @@ def tables(numbers, ded_numbers, dvb, conv):
 
     # Key numbers for the text.
     macros = {}
-    for model, nums in (("bem", numbers), ("ded", ded_numbers)):
+    for model, nums in (("bem", numbers), ("ded", ded_numbers), ("pts", pts_numbers or {})):
         for tag in TAGS:
             t = TAG_WORD[tag]
             for v, key in (("raw", "Raw"), ("corrected", "Cor"), ("corrected5", "Five"), ("corrected2", "Fine"),
-                           ("levels", "Lev"), ("levels5", "LevFive"), ("levels2", "LevFine"),
+                           ("complex", "Cpx"), ("complex5", "CpxFive"), ("complex2", "CpxFine"),
                            ("lateral_omitted", "LatZero"), ("lateral_sign", "LatSign"),
                            ("woofer_offset_omitted", "WfZero")):
                 if (tag, v) not in nums:
@@ -642,14 +703,36 @@ def tables(numbers, ded_numbers, dvb, conv):
             ref = cta_hv(model, tag, "rigorous", "v-rigorous")
             vertical = model == "ded" or BEM_VERTICAL
             for key, h, v in (("Raw", "raw", "v-raw"), ("Cor", "corrected", "v-corrected"),
-                              ("LevFive", "levels5", "v-levels5")):
+                              ("Five", "corrected5", "v-corrected5"), ("Fine", "corrected2", "v-corrected2"),
+                              ("Cpx", "complex", "v-complex")):
                 c = cta_hv(model, tag, h, v if vertical else "v-rigorous")
                 macros[f"{model}PirBoth{key}{t}"] = f"{deviation(c, ref, 'pir'):.2f}"
             if vertical:
-                for case, key in (("v-raw", "Raw"), ("v-corrected", "Cor"), ("v-corrected5", "Five")):
+                for case, key in (("v-raw", "Raw"), ("v-corrected", "Cor"), ("v-corrected5", "Five"),
+                                  ("v-flat", "Flat"), ("v-complex", "Cpx")):
                     macros[f"{model}SysVert{key}{t}"] = f"{error_summary(model, tag, case, 'system')['rms']:.2f}"
                     macros[f"{model}TwVert{key}{t}"] = f"{error_summary(model, tag, case, 'tweeter')['rms']:.2f}"
                     macros[f"{model}WfVert{key}{t}"] = f"{error_summary(model, tag, case, 'woofer')['rms']:.2f}"
+    if dist:
+        words = {"asis": "AsIs", "rigorous": "Rig", "corrected": "Reb", "there": "There", "plain": "Plain"}
+        for (tag, at, kind, suffix), r in dist.items():
+            stem = f"dist{TAG_WORD[tag]}{TAG_WORD[at]}{words[kind]}{SUFFIX_WORD[suffix]}"
+            for key, value in r.items():
+                short = {"system": "Sys", "tweeter": "Tw", "woofer": "Wf", "v-system": "VSys", "v-tweeter": "VTw",
+                         "v-woofer": "VWf", "pir": "Pir"}[key]
+                macros[stem + short] = f"{value:.2f}"
+    # The whole loudspeaker measured at once and corrected as one source at the tweeter.
+    for tag in TAGS:
+        t = TAG_WORD[tag]
+        if f"bem/{tag}/whole/system/power" not in DATA.files:
+            continue
+        for case, key in (("whole", "Whole"), ("whole2", "WholeFine"), ("v-whole", "VWhole")):
+            macros[f"bemSys{key}{t}"] = f"{error_summary('bem', tag, case, 'system')['rms']:.2f}"
+        for case, key in (("whole", "Whole"), ("corrected", "Cor")):
+            band = summary(get("bem", tag, case, "system"), get("bem", tag, "rigorous", "system"), F, ANG, (1000, 4000))
+            macros[f"bemSysXo{key}{t}"] = f"{band['rms']:.2f}"
+        ref = cta_hv("bem", tag, "rigorous", "v-rigorous")
+        macros[f"bemPirBothWhole{t}"] = f"{deviation(cta_hv('bem', tag, 'whole', 'v-whole'), ref, 'pir'):.2f}"
     solve = {k[len("solve/"):]: DATA[k] for k in DATA.files if k.startswith("solve/")}
     macros["bemFreqs"] = f"{len(F)}"
     macros["bemPoints"] = f"{len(TAGS) * 4 * len(ANGLES[SUFFIXES[-1]])}"
@@ -679,7 +762,8 @@ def main():
     fig_spinorama()
     conv = convergence_numbers()
     fig_convergence(conv)
-    tables(variant_numbers("bem"), variant_numbers("ded"), ded_vs_bem_numbers(), conv)
+    tables(variant_numbers("bem"), variant_numbers("ded"), ded_vs_bem_numbers(), conv, distance_numbers("bem"),
+           variant_numbers("pts"))
 
 
 if __name__ == "__main__":

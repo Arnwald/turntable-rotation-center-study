@@ -92,10 +92,12 @@ def correction_offsets(turntable: Turntable, driver: Placement, distance: float)
     ``lateral``: rotation axis to reference axis, positive toward the + side.
     ``driver_offset``: reference axis to the driver's acoustic center, positive toward the + side.
     ``mic_distance``: front baffle to microphone at 0 degrees.
+    ``out_of_plane``: the driver above the microphone's height (the reference point's).
     """
     return {
         "depth_mm": -turntable.axis_z * 1e3,
         "lateral_mm": (REFERENCE.x - turntable.axis_x) * 1e3,
         "driver_offset_mm": (driver.x - REFERENCE.x) * 1e3,
         "mic_distance_mm": distance * 1e3,
+        "out_of_plane_mm": (driver.y - REFERENCE.y) * 1e3,
     }
