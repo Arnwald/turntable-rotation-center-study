@@ -131,6 +131,7 @@ make test      # unit tests
 make study     # all simulated measurements (about 1.5 minutes, writes results/study.npz)
 make bem       # the two-way from the BEM data, its DED model and point sources (about 1 minute, results/bem.npz)
 make figures   # figures and tables in paper/
+make articles  # the articles' figures (articles/figures) and the magazine article as .docx (needs pandoc)
 make paper     # paper/main.pdf (needs a LaTeX distribution with latexmk)
 ```
 
@@ -151,6 +152,7 @@ make paper     # paper/main.pdf (needs a LaTeX distribution with latexmk)
 | `data/datasheets/` | datasheet curves (see the notes there) |
 | `data/bem/` | BEM pressures of the two-way (`two_way.npz`, single precision) at the 1728 microphone positions of `points.json` |
 | `paper/` | LaTeX report, figures, generated tables |
+| `articles/` | figures of the blog post and of the magazine article (SVG, PDF, PNG), and the magazine article (Markdown and Word) |
 
 ## License
 

@@ -10,7 +10,8 @@ positions, at every distance of the data, for the BEM, for the DED model of the 
   steps (suffixes ``""``, ``"5"``, ``"2"``; the finer steps where the data have them), each driver
   and the summed loudspeaker; ``corrected`` interpolates the re-propagated powers, ``complex`` the
   complex responses;
-* the correction variants of the three-way study (wrong parameters), 10 degree steps;
+* the correction variants of the three-way study (wrong parameters), 10 degree steps, and the lateral
+  offset left at zero or with the wrong sign with the complex responses interpolated (``-complex``);
 * the same on the vertical orbit (prefix ``v-``), measured with the loudspeaker on its side (``v-raw``
   and ``v-corrected`` for the BEM where the data have the centered vertical orbit), and ``v-flat``,
   the woofer taken as in the vertical orbit's plane (it is 205 mm beside it);
@@ -164,6 +165,9 @@ def main():
                     if plane == "h" and step == 10.0:
                         for variant, change in variants.items():
                             store.add(f"{tag}/{variant}", corrected(m, angles, d, freqs, change=change), filters)
+                        for variant in ("lateral_omitted", "lateral_sign"):
+                            store.add(f"{tag}/{variant}-complex",
+                                      corrected(m, angles, d, freqs, change=variants[variant], levels=False), filters)
             print(f"{tag} done ({time.time() - t0:.0f} s)")
         # Rebuilt at a larger distance than measured.
         for d, at in REBUILT_AT:

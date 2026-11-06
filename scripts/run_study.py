@@ -7,8 +7,9 @@ Cases, for microphone distances of 1 m and 2 m, horizontal orbit -170 ... 180 de
 * ``corrected``: ``raw`` after the rotation-center correction with the true offsets (3D distances,
   powers interpolated);
 * variants of ``corrected`` with wrong or missing correction parameters, the complex responses
-  interpolated instead of the powers (``complex``), the drivers' heights ignored
-  (``heights_ignored``), a 5-degree orbit, and the edge diffraction switched off;
+  interpolated instead of the powers (``complex``, and the lateral offset's two mistakes with them,
+  ``-complex``), the drivers' heights ignored (``heights_ignored``), a 5-degree orbit, and the edge
+  diffraction switched off;
 * at another distance: the 1 m measurements rebuilt as from the 2 m circle (``1m/corrected@2m``,
   and ``1m/rigorous@2m`` from the rigorous setup's), to compare with the rigorous 2 m data.
 
@@ -138,6 +139,9 @@ def main():
                     store.add(f"{tag}/{variant}", dict(v, system=system_sum(filters, v)), ref)
                 v = corrected(ls, raw, ANGLES, distance, levels=False)
                 store.add(f"{tag}/complex", dict(v, system=system_sum(filters, v)), ref)
+                for variant in ("lateral_omitted", "lateral_sign"):
+                    v = corrected(ls, raw, ANGLES, distance, VARIANTS[variant], levels=False)
+                    store.add(f"{tag}/{variant}-complex", dict(v, system=system_sum(filters, v)), ref)
                 if distance == 1.0:
                     # Rebuilt at 2 m from the 1 m measurements, centered and rigorous.
                     for name, data, setup in (("corrected", raw, CENTERED), ("rigorous", rigorous, RIGOROUS)):
