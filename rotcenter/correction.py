@@ -240,6 +240,20 @@ def _bracket(phis, phi):
     return [(lo, 1.0 - u), (hi, u)]
 
 
+def _wrap_around(rows):
+    """``rows`` (their direction first) sorted by direction, with copies 2 pi below and above when
+    they cover a full circle (one missing step allowed)."""
+    rows = sorted(rows, key=lambda r: r[0])
+    if len(rows) < 3:
+        return rows
+    gaps = [b[0] - a[0] for a, b in zip(rows, rows[1:])]
+    if rows[-1][0] - rows[0][0] < 2.0 * math.pi - 1.5 * max(gaps):
+        return rows
+    def shifted(turns):
+        return [(r[0] + turns * 2.0 * math.pi, *r[1:]) for r in rows]
+    return shifted(-1) + rows + shifted(1)
+
+
 def _supports(angles, setup, mirrored, present, taken, direction):
     """(phi, rho, elevation, index) of every measurement, sorted by direction, wrapped around for a
     full circle (one missing step allowed)."""
@@ -251,17 +265,7 @@ def _supports(angles, setup, mirrored, present, taken, direction):
         position, mirror = (-t, -1.0) if mirrored[j] else (t, 1.0)
         phi, dist = setup.measured(position)
         supports.append((phi * mirror, dist, setup.elevation(setup.measured_position(position), direction), j))
-    if len(supports) < 2:
-        return supports
-    supports.sort(key=lambda s: s[0])
-    gaps = [b[0] - a[0] for a, b in zip(supports, supports[1:])]
-    span = supports[-1][0] - supports[0][0]
-    if len(supports) >= 3 and span >= 2.0 * math.pi - 1.5 * max(gaps):
-        wrapped = [(p - 2.0 * math.pi, d, e, j) for p, d, e, j in supports]
-        wrapped += supports
-        wrapped += [(p + 2.0 * math.pi, d, e, j) for p, d, e, j in supports]
-        supports = sorted(wrapped, key=lambda s: s[0])
-    return supports
+    return _wrap_around(supports)
 
 
 def plan_correction(angles, measured, targets=None, mirrored=None, present=None, taken=None,
@@ -321,7 +325,8 @@ def smooth_octaves(freqs, power, half_oct):
 
 
 class Pattern:
-    """A plane's measurements of the driver as smoothed powers brought to 1 m, by direction."""
+    """A plane's measurements of the driver as smoothed powers brought to 1 m, by direction, wrapped
+    around for a full circle as the supports are."""
 
     def __init__(self, power, angles, setup, mirrored=None):
         mirrored = [False] * len(angles) if mirrored is None else mirrored
@@ -329,7 +334,7 @@ class Pattern:
         for p, angle, mirror in zip(power, angles, mirrored):
             phi, dist = setup.measured(-angle) if mirror else setup.measured(angle)
             rows.append((-phi if mirror else phi, p * dist**2))
-        rows.sort(key=lambda r: r[0])
+        rows = _wrap_around(rows)
         self.phis = np.array([r[0] for r in rows])
         self.power = np.stack([r[1] for r in rows])
 

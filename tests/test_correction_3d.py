@@ -119,6 +119,31 @@ def test_a_driver_under_the_plane_is_seen_from_another_angle_at_another_distance
             assert e_with < e_without - 5.0, (a, e_with, e_without)
 
 
+def test_behind_a_driver_under_the_plane_its_pattern_wraps_around_the_circle():
+    """The same woofer measured all around: behind it, between the last measurement and the first,
+    the change of angle across the plane is read from both sides of the circle."""
+    source = (0.0, -0.25, 0.0)
+    horizontal = calculated_at(2.0, source)
+    vertical = PlaneSetup((0, 1, 0), (0, 0, 1), source, (0, 0, 0), (0, 0, 1.0), (0, 0, 0), 2.0, 1.0)
+    off_axis = lambda d: np.arccos(np.clip(d[2] / np.linalg.norm(d), -1, 1))  # noqa: E731
+
+    def measure_3d(setup):
+        out = []
+        for a in ANGLES:
+            d = setup.measured_position(a) - np.asarray(source)
+            out.append(rippled_ir_at(off_axis(d), np.linalg.norm(d), np.linalg.norm(d)))
+        return out
+
+    h, v = measure_3d(horizontal), measure_3d(vertical)
+    with_ = correct_plane(samples(ANGLES, h), horizontal, FS, across=Across(ANGLES, v, vertical, (0, 1, 0)))
+    without = correct_plane(samples(ANGLES, h), horizontal, FS)
+    for a in (170.0, 180.0, -170.0):
+        i = ANGLES.index(a)
+        expected = expected_at(horizontal, a, off_axis)
+        e_with, e_without = error_db(with_[i], expected), error_db(without[i], expected)
+        assert e_with < e_without - 5.0, (a, e_with, e_without)
+
+
 def test_a_driver_out_of_the_plane_of_the_microphone():
     """A woofer 250 mm below the microphone's height, the axis 180 mm behind the baffle: the
     distances are 3D."""

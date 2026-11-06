@@ -509,7 +509,7 @@ $\vartheta$ off its axis,
 \end{equation}
 where $s$ is the squared sine of the angle by which $\vect d$ turns around the axis from the plane, and
 $P_\text{own}$, $P_\text{other}$ are the two orbits' powers brought to 1\,m, smoothed over $\pm1/12$
-octave and interpolated in angle. The response interpolated in the plane is multiplied by
+octave and interpolated in angle (around the circle, like the supports, for a full orbit). The response interpolated in the plane is multiplied by
 $\sqrt{P(\vect d^*)/P(\vect d_\text{int})}$, limited to $\pm6$\,dB, from the direction the supports stand
 for to the target's. With one orbit measured, the driver is taken as symmetric about its axis (the
 other plane's powers are this plane's).
@@ -1131,12 +1131,16 @@ within \distOneTwoThereFinePir\,dB, where the 1\,m data rebuilt keep \distOneTwo
 Without the cabinet (point sources, Table~\ref{tab:bemdistance} does not show them), the rebuild is exact
 to within 0.1\,dB. For the vertical orbit, where the woofer is 205\,mm beside the plane and seen at
 $11.6^\circ$ across it from 1\,m but $5.9^\circ$ from 2\,m, the horizontal orbit's measurements give that
-change of angle. They change nothing measurable here: the sum is \distOneTwoRebVSys\,dB RMS off with them,
-\distOneTwoPlainVSys\,dB without. The woofer's directivity changes little over $6^\circ$ in its band, and
-the factor, read from measurements that carry the cabinet's diffraction, removes about as much as it adds.
-The same holds for the three-way's domes, $\pm65$\,mm from the plane (Table~\ref{tab:distance}). The
-correction matters for drivers farther from the plane and closer to the microphone: a woofer 250\,mm under
-the tweeter is seen $14^\circ$ off the plane at 1\,m and $7^\circ$ at 2\,m.
+change of angle. The sum hardly moves (\distOneTwoRebVSys\,dB RMS off with them,
+\distOneTwoPlainVSys\,dB without), and the three-way's domes, $\pm65$\,mm from the plane, not at all
+(Table~\ref{tab:distance}). The woofer's error between 200\,Hz and 1\,kHz even grows, from 0.23 to
+0.31\,dB RMS, though the factor is right. Where the two orbits meet, the vertical one's rebuilt woofer now
+agrees with the horizontal one's: its mean error in that band is $+0.01$\,dB in front and $-0.52$\,dB
+behind, against $+0.01$ and $-0.55$\,dB on the horizontal orbit, where no factor acts ($+0.08$ and
+$-0.24$\,dB without the factor). The half decibel lost behind the cabinet is the distance model's: the
+level there does not fall as from the cone (the first item above). Left as measured, the angle across the
+plane happened to make up half of it on the vertical orbit. The correction matters for drivers farther from the plane and closer to the microphone: a
+woofer 250\,mm under the tweeter is seen $14^\circ$ off the plane at 1\,m and $7^\circ$ at 2\,m.
 
 \begin{table}[tbp]
   \centering
