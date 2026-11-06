@@ -60,7 +60,8 @@ with another relative delay, and they no longer add up the same way.
 
 ## Putting the Measurements Back
 
-The correction works one driver at a time. For each nominal angle, it asks where the microphone should
+The correction works one driver at a time, each measured on its own. For each nominal angle, it asks where
+the microphone should
 have been, and which measurements were taken closest to that direction, as seen from the driver. Both
 questions have exact answers, because the geometry of the setup is known. The correction takes the two
 measurements whose directions bracket the ideal one, moves each to the ideal distance, and averages them,
@@ -141,6 +142,19 @@ Table 1: RMS level error of the summed two-way on the vertical orbit (dB), again
 Averaging powers matters most with coarse steps. With 10° steps, the complex average leaves 1.21 dB RMS
 at 1 m, twice as much, with notches down to −20 dB behind the cabinet, where the orange curve of Figure 4
 peaks. With 2.5° steps, neighboring measurements are in phase again and both averages agree.
+
+## Drivers One by One, or the Whole Loudspeaker
+
+So far each driver was measured on its own and moved from its own position, then the two were summed
+through the crossover. A finished loudspeaker, a passive one for instance, is often measured as a whole,
+and can then only be moved from one point, the reference point on the tweeter axis. Measured at once and
+corrected that way, the two-way keeps 0.68 dB RMS of error on its vertical orbit at 1 m with 10° steps,
+against 0.62 dB with the drivers taken one by one, and its PIR is the same. The difference sits around the
+crossover, 0.85 against 0.70 dB between 1 and 4 kHz, because the woofer and the tweeter keep the relative
+delay of the position the microphone was really at. That error should grow with the drivers' distance from
+the reference point, relative to the measurement distance, as on a tall tower measured up close, which this
+study did not simulate. Measuring the drivers separately remains the cleaner way, and it is the one a
+crossover is designed from.
 
 ## The Spatial Averages
 
@@ -246,10 +260,12 @@ The study's code and data, and a technical report with every formula, are on Git
 >    positive if the reference axis lies on the side the microphone faces at +90°.
 > 3. Give each driver its offset from the reference axis in the plane of rotation. A woofer beside the
 >    tweeter, as in a two-way lying on its side, is not at zero.
-> 4. Average the powers between measured directions.
-> 5. Use 5° steps or finer if the response above a few kHz matters, 2.5° to get closest.
-> 6. Measure at the distance you want the results at, when the room allows it.
-> 7. Treat rear responses at mid and high frequencies as approximate. Below 3 kHz, the spatial averages are
+> 4. Measure the drivers on their own when you can. A whole loudspeaker can be corrected as one source at
+>    the reference point, a little less well around the crossover.
+> 5. Average the powers between measured directions.
+> 6. Use 5° steps or finer if the response above a few kHz matters, 2.5° to get closest.
+> 7. Measure at the distance you want the results at, when the room allows it.
+> 8. Treat rear responses at mid and high frequencies as approximate. Below 3 kHz, the spatial averages are
 >    good to about 0.1 dB.
 
 ---

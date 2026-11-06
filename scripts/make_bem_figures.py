@@ -721,6 +721,18 @@ def tables(numbers, ded_numbers, dvb, conv, dist=None, pts_numbers=None):
                 short = {"system": "Sys", "tweeter": "Tw", "woofer": "Wf", "v-system": "VSys", "v-tweeter": "VTw",
                          "v-woofer": "VWf", "pir": "Pir"}[key]
                 macros[stem + short] = f"{value:.2f}"
+    # The whole loudspeaker measured at once and corrected as one source at the tweeter.
+    for tag in TAGS:
+        t = TAG_WORD[tag]
+        if f"bem/{tag}/whole/system/power" not in DATA.files:
+            continue
+        for case, key in (("whole", "Whole"), ("whole2", "WholeFine"), ("v-whole", "VWhole")):
+            macros[f"bemSys{key}{t}"] = f"{error_summary('bem', tag, case, 'system')['rms']:.2f}"
+        for case, key in (("whole", "Whole"), ("corrected", "Cor")):
+            band = summary(get("bem", tag, case, "system"), get("bem", tag, "rigorous", "system"), F, ANG, (1000, 4000))
+            macros[f"bemSysXo{key}{t}"] = f"{band['rms']:.2f}"
+        ref = cta_hv("bem", tag, "rigorous", "v-rigorous")
+        macros[f"bemPirBothWhole{t}"] = f"{deviation(cta_hv('bem', tag, 'whole', 'v-whole'), ref, 'pir'):.2f}"
     solve = {k[len("solve/"):]: DATA[k] for k in DATA.files if k.startswith("solve/")}
     macros["bemFreqs"] = f"{len(F)}"
     macros["bemPoints"] = f"{len(TAGS) * 4 * len(ANGLES[SUFFIXES[-1]])}"

@@ -113,6 +113,10 @@ Huygens, is not public; its pressures are in [`data/bem/`](data/bem/).
 - **Interpolate powers.** Where the step undersamples the pattern, interpolating complex responses
   cancels in part (artificial notches); interpolating the re-propagated powers, keeping the complex
   interpolation's phase, halves the residual at 10°.
+- **A whole loudspeaker**, measured at once through its crossover and corrected as one source at the
+  tweeter, keeps 0.68 dB RMS against 0.62 dB with its drivers measured and corrected one by one (1 m, 10°
+  steps), with the same PIR; the difference sits around the crossover (0.85 against 0.70 dB from 1 to
+  4 kHz).
 - **The vertical orbit**, measured with the cabinet on its side (depth only, the woofer 205 mm beside the
   plane), corrects the same way: 1.86 dB RMS uncorrected, 0.38 dB with 10° steps, 0.26 dB with 5° at 1 m.
 - **At another distance**: the 1 m data rebuilt as seen from 2 m keep 0.65 dB RMS on the sum and 0.35 dB

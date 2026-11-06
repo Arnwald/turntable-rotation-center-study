@@ -9,7 +9,8 @@ positions, at every distance of the data, for the BEM, for the DED model of the 
 * on the horizontal orbit, ``rigorous``, ``raw`` and ``corrected`` data with 10, 5 and 2.5 degree
   steps (suffixes ``""``, ``"5"``, ``"2"``; the finer steps where the data have them), each driver
   and the summed loudspeaker; ``corrected`` interpolates the re-propagated powers, ``complex`` the
-  complex responses;
+  complex responses; ``whole``: the summed loudspeaker measured at once, through its crossover, and
+  corrected as one source at the reference point (the tweeter);
 * the correction variants of the three-way study (wrong parameters), 10 degree steps, and the lateral
   offset left at zero or with the wrong sign with the complex responses interpolated (``-complex``);
 * the same on the vertical orbit (prefix ``v-``), measured with the loudspeaker on its side (``v-raw``
@@ -159,6 +160,10 @@ def main():
                     store.add(f"{tag}/{prefix}corrected{suffix}", corrected(m, angles, d, freqs, plane), filters)
                     store.add(f"{tag}/{prefix}complex{suffix}", corrected(m, angles, d, freqs, plane, levels=False),
                               filters)
+                    whole = correct_spectra(twoway.system_sum(filters, m), angles,
+                                            PlaneOffsets(**offsets_of(twoway.REFERENCE, d, plane)), freqs)
+                    store.data[f"{tag}/{prefix}whole{suffix}/system/power"] = smooth_power(
+                        freqs, np.abs(whole) ** 2, 24, freqs).astype(np.float32)
                     if plane == "v":
                         flat = {"out_of_plane_mm": lambda o: 0.0}
                         store.add(f"{tag}/v-flat{suffix}", corrected(m, angles, d, freqs, plane, change=flat), filters)
