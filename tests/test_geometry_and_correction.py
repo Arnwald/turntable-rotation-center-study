@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 from rotcenter.constants import C
-from rotcenter.correction import PlaneGeometry, PlaneOffsets, Sample, correct_plane, correct_spectra
+from rotcenter.correction import PlaneOffsets, PlaneSetup, Sample, correct_plane, correct_spectra
 from rotcenter.geometry import CENTERED, MID, REFERENCE, RIGOROUS, TWEETER, WOOFER, correction_offsets, mic_positions
 
 ANGLES = np.arange(-170, 181, 10)
@@ -40,20 +40,22 @@ def test_correction_parameters_of_the_centered_setup():
 @pytest.mark.parametrize("driver", [WOOFER, MID, TWEETER])
 @pytest.mark.parametrize("distance", [1.0, 2.0])
 def test_plane_model_matches_the_3d_kinematics(driver, distance):
-    """The correction's 2D model of the measured positions (microphone shifted sideways onto the
-    reference axis) must agree with the independent 3D kinematics of the simulation."""
-    g = PlaneGeometry(PlaneOffsets(**correction_offsets(CENTERED, driver, distance)))
+    """The correction's model of the measured positions (microphone shifted sideways onto the
+    reference axis, drivers above or below its height) must agree with the independent 3D
+    kinematics of the simulation: directions in the plane, distances in 3D."""
+    g = PlaneSetup.from_offsets(PlaneOffsets(**correction_offsets(CENTERED, driver, distance)))
     mics = mic_positions(CENTERED, ANGLES, distance)
+    source = np.array([driver.x, driver.y, 0.0])
     for a, m in zip(ANGLES, mics):
         phi, rho = g.measured(a)
         dx, dz = m[0] - driver.x, m[2]
-        assert rho == pytest.approx(np.hypot(dx, dz), abs=1e-12)
+        assert rho == pytest.approx(np.linalg.norm(m - source), abs=1e-12)
         assert np.sin(phi) == pytest.approx(dx / np.hypot(dx, dz), abs=1e-12)
         assert np.cos(phi) == pytest.approx(dz / np.hypot(dx, dz), abs=1e-12)
     rigorous = mic_positions(RIGOROUS, ANGLES, distance)
     for a, m in zip(ANGLES, rigorous):
         phi, rho = g.ideal(a)
-        assert rho == pytest.approx(np.hypot(m[0] - driver.x, m[2]), abs=1e-12)
+        assert rho == pytest.approx(np.linalg.norm(m - source), abs=1e-12)
 
 
 def pulse(delay_s, gain, n=4096, corner=None, fs=FS):
@@ -67,7 +69,7 @@ def pulse(delay_s, gain, n=4096, corner=None, fs=FS):
 
 
 def measured_set(offsets, directivity):
-    g = PlaneGeometry(offsets)
+    g = PlaneSetup.from_offsets(offsets)
     irs = []
     for a in ANGLES:
         phi, rho = g.measured(a)
@@ -77,7 +79,7 @@ def measured_set(offsets, directivity):
 
 
 def ideal(offsets, angle, directivity):
-    phi, rho = PlaneGeometry(offsets).ideal(angle)
+    phi, rho = PlaneSetup.from_offsets(offsets).ideal(angle)
     gain, corner = directivity(phi)
     return pulse(0.002 + rho / C, gain / rho, corner=corner)
 
@@ -141,7 +143,7 @@ def test_frequency_domain_correction_matches_the_time_domain():
 @pytest.mark.parametrize("driver_offset", [0.0, -205.0])
 def test_frequency_domain_correction_of_a_point_source_is_exact(driver_offset):
     o = PlaneOffsets(depth_mm=145.0, lateral_mm=120.0, driver_offset_mm=driver_offset, mic_distance_mm=2000.0)
-    g = PlaneGeometry(o)
+    g = PlaneSetup.from_offsets(o)
     freqs = 20.0 * 2.0 ** (np.arange(400) / 40.0)
     source = lambda phi, rho: np.exp(-2j * np.pi * freqs * rho / C) / rho  # noqa: E731
     spectra = np.stack([source(*g.measured(a)) for a in ANGLES])

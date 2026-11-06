@@ -202,12 +202,15 @@ def microphones(setup: str, distance: float, angles) -> np.ndarray:
 def correction_offsets(driver: Placement, distance: float, plane: str = "h") -> dict:
     """Parameters of the correction for the centered setup (mm): horizontal orbit (``"h"``), or
     vertical orbit with the loudspeaker on its side (``"v"``), whose axis is level with both
-    drivers (no lateral offset, no driver offset)."""
+    drivers (no lateral offset, no driver offset). Out of the vertical orbit's plane, the woofer is
+    205 mm toward the horizontal orbit's - side."""
     if plane == "h":
         return {"depth_mm": -CENTERED.axis_z * 1e3, "lateral_mm": (REFERENCE.x - CENTERED.axis_x) * 1e3,
-                "driver_offset_mm": (driver.x - REFERENCE.x) * 1e3, "mic_distance_mm": distance * 1e3}
+                "driver_offset_mm": (driver.x - REFERENCE.x) * 1e3, "mic_distance_mm": distance * 1e3,
+                "out_of_plane_mm": (driver.y - REFERENCE.y) * 1e3}
     return {"depth_mm": -CENTERED_VERTICAL.axis_z * 1e3, "lateral_mm": 0.0,
-            "driver_offset_mm": (driver.y - REFERENCE.y) * 1e3, "mic_distance_mm": distance * 1e3}
+            "driver_offset_mm": (driver.y - REFERENCE.y) * 1e3, "mic_distance_mm": distance * 1e3,
+            "out_of_plane_mm": (driver.x - REFERENCE.x) * 1e3}
 
 
 def flat_drivers(drv: dict) -> dict:

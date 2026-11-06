@@ -17,7 +17,7 @@ sys.path.insert(0, str(ROOT))
 
 from rotcenter import plotstyle as ps  # noqa: E402
 from rotcenter.constants import C, P_REF  # noqa: E402
-from rotcenter.correction import PlaneGeometry, PlaneOffsets  # noqa: E402
+from rotcenter.correction import PlaneOffsets, PlaneSetup  # noqa: E402
 from rotcenter.cta2034 import SP_WEIGHTS, horizontal_cta2034  # noqa: E402
 from rotcenter.directivity import Radiator  # noqa: E402
 from rotcenter.drivers import (MID_RADIATOR, SIG225, build_drivers, closed_box_alignment,  # noqa: E402
@@ -83,7 +83,7 @@ def fig_kinematics():
     rows = []
     for di, dist in enumerate((1.0, 2.0)):
         for name, pl, color in (("tweeter / midrange", TWEETER, ps.SLOTS[0]), ("woofer", WOOFER, ps.SLOTS[1])):
-            g = PlaneGeometry(PlaneOffsets(**correction_offsets(CENTERED, pl, dist)))
+            g = PlaneSetup.from_offsets(PlaneOffsets(**correction_offsets(CENTERED, pl, dist)))
             meas = np.array([g.measured(a) for a in angles])
             ideal = np.array([g.ideal(a) for a in angles])
             level = 20 * np.log10(ideal[:, 1] / meas[:, 1])
@@ -407,6 +407,8 @@ VARIANT_LABELS = {
     "lateral_plus10": "lateral +10 mm",
     "lateral_minus10": "lateral −10 mm",
     "distance_plus20": "mic distance +20 mm",
+    "complex": "complex responses interpolated",
+    "heights_ignored": "drivers' heights ignored",
 }
 
 
@@ -427,6 +429,32 @@ def variant_numbers():
     return out
 
 
+#: Results at 2 m, against the rigorous 2 m data: what the 1 m measurements give as they are, rebuilt
+#: at 2 m, and what the 2 m measurements give corrected. ``(case, scale)``: levels at 1 m are four
+#: times the 2 m ones in power.
+DISTANCE_CASES = {
+    "1m/rigorous": ("rigorous at 1 m, used as they are", 4.0),
+    "1m/rigorous@2m": ("rigorous at 1 m, rebuilt at 2 m", 4.0),
+    "1m/corrected@2m": ("centered at 1 m, rebuilt at 2 m", 4.0),
+    "1m/plain@2m": ("… without the change of angle across the plane", 4.0),
+    "2m/corrected": ("centered at 2 m, corrected", 1.0),
+}
+
+
+def distance_numbers():
+    out = {}
+    band = (F >= 100) & (F <= 20000)
+    ref_cta = cta("2m/rigorous")
+    for key, (_, scale) in DISTANCE_CASES.items():
+        row = {}
+        for name in DRIVERS + ("system",):
+            row[name] = summary(get(key, name), scale * get("2m/rigorous", name), F, ANG, BANDS[name])
+        c = cta(key)
+        row["pir"] = float(np.max(np.abs(ps.db10(c["pir"] / (scale * ref_cta["pir"])))[band]))
+        out[key] = row
+    return out
+
+
 def fig_sensitivity(numbers):
     order = ["raw", "corrected", "step5", "lateral_omitted", "lateral_sign", "woofer_offset_omitted",
              "depth_plus10", "depth_minus10", "lateral_plus10", "lateral_minus10", "distance_plus20"]
@@ -442,7 +470,7 @@ def fig_sensitivity(numbers):
                 ax.text(val + 0.04, yy + (0.2 if k == 0 else -0.2), f"{val:.2f}", va="center", fontsize=5.6, color=ps.INK_2)
         ax.set_title(title, loc="left")
         ax.grid(axis="y", visible=False)
-        ax.set_xlim(0, max(4.6, ax.get_xlim()[1]))
+        ax.set_xlim(0, ax.get_xlim()[1] * 1.1)
     axes[0].set_yticks(y)
     axes[0].set_yticklabels([VARIANT_LABELS[v] for v in order], fontsize=6.5)
     axes[1].legend(loc="lower right", fontsize=6.5)
@@ -455,7 +483,7 @@ def fig_sensitivity(numbers):
 # Tables
 # ---------------------------------------------------------------------------------------------
 
-def tables(numbers):
+def tables(numbers, distances):
     TAB.mkdir(parents=True, exist_ok=True)
     # Error summary: raw / corrected, with and without diffraction.
     with open(TAB / "errors.tex", "w") as fh:
@@ -478,6 +506,12 @@ def tables(numbers):
                 cells.append(f"{r['woofer']['rms']:.2f} & {r['mid']['rms']:.2f} & {r['tweeter']['rms']:.2f} & "
                              f"{r['system']['rms']:.2f} & {r['pir']:.2f}")
             fh.write(f"{label} & " + " & ".join(cells) + " \\\\\n")
+    # At 2 m, from the 1 m measurements.
+    with open(TAB / "distance.tex", "w") as fh:
+        for key, (label, _) in DISTANCE_CASES.items():
+            r = distances[key]
+            fh.write(f"{label} & {r['woofer']['rms']:.2f} & {r['mid']['rms']:.2f} & {r['tweeter']['rms']:.2f} & "
+                     f"{r['system']['rms']:.2f} & {r['pir']:.2f} \\\\\n")
     # CTA-2034-A curves: largest deviations.
     band = (F >= 100) & (F <= 20000)
     with open(TAB / "cta.tex", "w") as fh:
@@ -505,7 +539,7 @@ def tables(numbers):
         for tag in ("1m", "2m"):
             t = "One" if tag == "1m" else "Two"
             for v, key in (("raw", "Raw"), ("corrected", "Cor"), ("lateral_omitted", "LatZero"), ("lateral_sign", "LatSign"),
-                           ("step5", "Five")):
+                           ("step5", "Five"), ("complex", "Cpx"), ("heights_ignored", "Flat")):
                 r = numbers[(tag, v)]
                 fh.write(f"\\newcommand{{\\pir{key}{t}}}{{{r['pir']:.2f}}}\n")
                 fh.write(f"\\newcommand{{\\sys{key}{t}}}{{{r['system']['rms']:.2f}}}\n")
@@ -514,6 +548,18 @@ def tables(numbers):
                 fh.write(f"\\newcommand{{\\twmax{key}{t}}}{{{r['tweeter']['max']:.1f}}}\n")
                 fh.write(f"\\newcommand{{\\wf{key}{t}}}{{{r['woofer']['rms']:.2f}}}\n")
                 fh.write(f"\\newcommand{{\\wfmax{key}{t}}}{{{r['woofer']['max']:.1f}}}\n")
+            for name, short in (("system", "sys"), ("woofer", "wf"), ("mid", "mid"), ("tweeter", "tw")):
+                for case, key in (("corrected", "DirCor"), ("complex", "DirCpx")):
+                    s = summary(get(f"{tag}-direct/{case}", name), get(f"{tag}-direct/rigorous", name), F, ANG,
+                                BANDS[name])
+                    fh.write(f"\\newcommand{{\\{short}{key}{t}}}{{{s['rms']:.2f}}}\n")
+        for key, word in (("1m/rigorous", "AsIs"), ("1m/rigorous@2m", "RigRebuilt"), ("1m/corrected@2m", "Rebuilt"),
+                          ("1m/plain@2m", "Plain"), ("2m/corrected", "AtTwo")):
+            r = distances[key]
+            fh.write(f"\\newcommand{{\\dist{word}Sys}}{{{r['system']['rms']:.2f}}}\n")
+            fh.write(f"\\newcommand{{\\dist{word}Tw}}{{{r['tweeter']['rms']:.2f}}}\n")
+            fh.write(f"\\newcommand{{\\dist{word}Wf}}{{{r['woofer']['rms']:.2f}}}\n")
+            fh.write(f"\\newcommand{{\\dist{word}Pir}}{{{r['pir']:.2f}}}\n")
 
 
 def main():
@@ -533,7 +579,7 @@ def main():
     fig_pir()
     numbers = variant_numbers()
     fig_sensitivity(numbers)
-    tables(numbers)
+    tables(numbers, distance_numbers())
 
 
 if __name__ == "__main__":

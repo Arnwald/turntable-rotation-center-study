@@ -6,7 +6,7 @@ import pytest
 
 from rotcenter import twoway
 from rotcenter.constants import C, P_REF, R_REF, RHO
-from rotcenter.correction import PlaneGeometry, PlaneOffsets
+from rotcenter.correction import PlaneOffsets, PlaneSetup
 
 ROOT = Path(__file__).resolve().parent.parent
 FREQS = 20.0 * 800.0 ** (np.arange(464) / 463)
@@ -25,7 +25,7 @@ def test_microphones_are_the_points_of_the_bem_data():
 def test_correction_parameters_match_the_kinematics(distance):
     angles = np.arange(-170, 181, 10)
     for plane, setup, rigorous in (("h", "centered-h", "rigorous-h"), ("v", "centered-v", "rigorous-v")):
-        g = PlaneGeometry(PlaneOffsets(**twoway.correction_offsets(twoway.TWEETER, distance, plane)))
+        g = PlaneSetup.from_offsets(PlaneOffsets(**twoway.correction_offsets(twoway.TWEETER, distance, plane)))
         measured = twoway.microphones(setup, distance, angles)
         ideal = twoway.microphones(rigorous, distance, angles)
         axis = 0 if plane == "h" else 1
@@ -34,6 +34,19 @@ def test_correction_parameters_match_the_kinematics(distance):
                 d = point - np.array([twoway.TWEETER.x, twoway.TWEETER.y, 0.0])
                 assert rho == pytest.approx(np.hypot(d[axis], d[2]), abs=1e-12)
                 assert np.sin(phi) == pytest.approx(d[axis] / np.hypot(d[axis], d[2]), abs=1e-12)
+
+
+@pytest.mark.parametrize("distance", [1.0, 2.0])
+def test_the_woofer_is_out_of_the_vertical_orbit_s_plane(distance):
+    """Seen from the woofer, 205 mm beside the vertical orbit's plane, the microphone is farther
+    away than in that plane, and the correction knows it."""
+    angles = np.arange(-170, 181, 10)
+    g = PlaneSetup.from_offsets(PlaneOffsets(**twoway.correction_offsets(twoway.WOOFER, distance, "v")))
+    woofer = np.array([twoway.WOOFER.x, twoway.WOOFER.y, 0.0])
+    for a, m in zip(angles, twoway.microphones("centered-v", distance, angles)):
+        phi, rho = g.measured(a)
+        assert rho == pytest.approx(np.linalg.norm(m - woofer), abs=1e-12)
+        assert np.sin(phi) == pytest.approx((m[1] - woofer[1]) / np.hypot(m[1] - woofer[1], m[2]), abs=1e-12)
 
 
 def test_volume_velocity_gives_the_datasheet_response_in_an_infinite_baffle():
