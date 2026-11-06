@@ -261,16 +261,20 @@ def cta_both(case_h, case_v, tag="1m", model="bem"):
     return cta2034(at_ten(bem(case_h, tag, model=model), ANGLES[sh]), at_ten(bem(case_v, tag, model=model), ANGLES[sv]))
 
 
-def spatial(tag="1m"):
-    """PIR and sound power from both orbits, against the rigorous ones."""
-    ref = cta_both("rigorous", "v-rigorous", tag)
+def spatial(tag="1m", upright=False):
+    """PIR and sound power from both orbits, against the rigorous ones. ``upright``: the two-way
+    read as an ordinary two-way standing on end, the orbit through both drivers its vertical one
+    (measured lying on its side) and the other its horizontal one."""
+    def both(h, v):
+        return cta_both(v, h, tag) if upright else cta_both(h, v, tag)
+    ref = both("rigorous", "v-rigorous")
     curves = (("raw", "v-raw", "uncorrected", RAW, (0, (1.2, 1.4)), 1.6),
               ("corrected", "v-corrected", "corrected, 10° steps", COR, "-", 1.5),
               ("corrected2", "v-corrected2", "corrected, 2.5° steps", ALT, (0, (5, 2)), 1.3))
     fig, axes = plt.subplots(1, 2, figsize=(7.2, 2.8), sharey=True)
     for ax, key, title in zip(axes, ("pir", "sp"), ("Predicted In-Room Response", "sound power")):
         for h, v, label, color, ls, lw in curves:
-            c = cta_both(h, v, tag)
+            c = both(h, v)
             ax.semilogx(F2, ps.db10(c[key] / ref[key]), color=color, ls=ls, lw=lw, label=label)
         ax.axhline(0, color=ps.AXIS, lw=0.8)
         ps.freq_axis(ax, 100, 16000)
@@ -283,7 +287,7 @@ def spatial(tag="1m"):
     fig.tight_layout(w_pad=0.6, rect=(0, 0.1, 1, 1))
     handles, labels = axes[0].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=3, handlelength=2.6)
-    save(fig, f"spatial-{tag}")
+    save(fig, f"spatial-{'upright-' if upright else ''}{tag}")
 
 
 def residual_angle(tags=("1m", "2m")):
@@ -513,6 +517,7 @@ def main():
     errors_geometry()
     responses("1m")
     spatial("1m")
+    spatial("1m", upright=True)
     residual_angle()
     step_convergence()
     lateral_offset()

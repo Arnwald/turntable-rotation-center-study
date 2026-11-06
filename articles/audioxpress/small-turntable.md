@@ -5,42 +5,58 @@ author: "By Arnaud Demion"
 ---
 
 A loudspeaker's off-axis behavior is measured by turning it in front of a fixed microphone. For the
-data to mean what they should, the loudspeaker has to turn about a point on its baffle, the reference point,
-usually on the tweeter axis. The microphone then stays at the same distance from that point at every
-angle, as a distant listener would. CTA-2034-A, the standard behind the "spinorama" curves, defines its
-measurements that way, on a horizontal and a vertical orbit (a full circle of measurement positions)
+data to mean what they should, the loudspeaker has to turn about a point on its baffle, the reference
+point, usually on the tweeter axis. The microphone then stays at the same distance from that point at
+every angle, as a distant listener would. CTA-2034-A, the standard behind the "spinorama" curves, defines
+its measurements that way, on a horizontal and a vertical orbit (a full circle of measurement positions)
 around the reference point, at 2 m [3].
 
 With a large turntable, or a rig that holds the cabinet with its baffle over the axis, this is easy. The
-turntables most small manufacturers and hobbyists use are 30 to 40 cm across. Put the axis on the baffle
-of a bookshelf loudspeaker and most of the cabinet stands off the table, its center of gravity near the
-edge. So the cabinet goes in the middle of the table, and the rotation axis runs through the middle of
-the box (Figure 1).
+turntables most small manufacturers and hobbyists use are 30 to 40 cm across. A large loudspeaker, a
+three-way tower for instance, cannot stand on such a table with its baffle over the axis, because most of
+the cabinet would hang off the edge. So it goes in the middle of the table, and the rotation axis runs
+through the middle of the box (Figure 1).
 
-![Figure 1: The two setups. In (a), the rotation axis runs along the baffle, through the tweeter. In (b), the cabinet is centered on the turntable and the axis runs through the middle of the box.](../figures/setups-two-way.png){width=100%}
+Everything in this article comes from simulations, computed with the boundary element method (BEM). A
+simulation can measure the same loudspeaker both ways, with the axis on the baffle and with the cabinet
+centered, and compare them exactly. It also leaves out what would blur that comparison in a real
+measurement: the room and its reflections, the gating window, noise, positioning errors, and the drivers'
+own behavior, such as cone breakup, since the diaphragms are rigid. What remains is the problem itself,
+moving the measurements from where they were taken to where they should have been, and the cabinet's part
+in it.
+
+The loudspeaker studied is an ordinary two-way: a 24-liter closed box, 290 mm wide, 440 mm high and 290 mm
+deep, with a Dayton Audio SIG225-4 8-inch woofer and a SICA LP 90.28/N92 1.1-inch dome tweeter 205 mm
+above it. Their responses follow the manufacturers' datasheets, and a crossover sums them: each driver is
+equalized on axis to a fourth-order Linkwitz-Riley target at 2 kHz. In the simulation the woofer is a rigid
+recessed cone and the tweeter a rigid dome. A two-way of this size keeps the drawings and the computations
+simple, and it would fit on a small turntable more easily than a large three-way tower. The geometry is the
+same, though, and the errors to correct grow with the depth of the cabinet.
+
+![Figure 1: The two-way lying on its side, as it is for measuring its vertical directivity. In (a), the rotation axis runs along the baffle, through the tweeter. In (b), the cabinet is centered on the turntable and the axis runs through the middle of the box.](../figures/setups-two-way.png){width=100%}
 
 ## What Goes Wrong
 
-Take a horizontal two-way monitor, 440 mm wide, 290 mm high and 290 mm deep, with the woofer on the left
-and the tweeter 205 mm to its right (Figure 2). Centered on the turntable, the cabinet turns about an axis
-145 mm behind the baffle. The tweeter is 120 mm to the right of the cabinet's center, so the
-microphone has to be moved 120 mm sideways to face it at 0°.
+Standing on the turntable for its horizontal directivity, the two-way turns about an axis 145 mm behind
+the baffle, and the microphone faces the tweeter at 0°. For its vertical directivity it lies on its side
+(Figures 1 and 2). The axis is still 145 mm behind the baffle, but the tweeter is now 120 mm to the side of
+it, so the microphone has to be moved 120 mm sideways to face it at 0°.
 
-![Figure 2: The centered setup seen from above, with the four distances the correction needs. The lateral offset is positive here, because the reference axis lies on the side the microphone moves toward at positive angles.](../figures/top-view.png){width=62%}
+![Figure 2: The two-way lying on its side, seen from above, with the four distances the correction needs. The lateral offset is positive here, because the reference axis lies on the side the microphone moves toward at positive angles.](../figures/top-view.png){width=62%}
 
-Off axis, the microphone is then farther from the drivers than intended. Behind the cabinet, at a nominal
-1 m, it is up to a third farther away, so the response reads 2.5 to 2.8 dB low, and the sound arrives up to
-1 ms late. Each driver is also heard from another direction than the nominal angle, by as much as 15°.
-Since the microphone was moved sideways, the errors differ from one side of the cabinet to the other. At
-2 m the level and direction errors are about halved, while the delay stays the same, because it depends on
-where the axis is, whatever the distance.
+Off axis, the microphone is then farther from the drivers than intended. In the vertical orbit, behind the
+cabinet, at a nominal 1 m, it is up to a third farther away, so the response reads 2.5 to 2.8 dB low, and
+the sound arrives up to 1 ms late. Each driver is also heard from another direction than the nominal
+angle, by as much as 15°. Since the microphone was moved sideways, the errors are not the same on the
+woofer's side and on the other. At 2 m the level and direction errors are about halved, while the delay
+stays the same, because it depends on where the axis is, whatever the distance.
 
-Figure 3 shows what this does to the summed loudspeaker. At 60°, the uncorrected response is 1 to 2 dB
-low. At 150°, it also has notches around the 2 kHz crossover that the real response does not have:
-heard from the wrong place, the woofer and the tweeter reach the microphone with another relative delay,
-and they no longer add up the same way.
+Figure 3 shows what this does to the summed loudspeaker in the vertical orbit. At 60° above the axis, the
+uncorrected response is 1 to 2 dB low. At 150°, it also has notches around the 2 kHz crossover that the
+real response does not have. Heard from the wrong place, the woofer and the tweeter reach the microphone
+with another relative delay, and they no longer add up the same way.
 
-![Figure 3: The summed two-way at 60°, 120° and 150°, microphone at 1 m, measured in 10° steps, 1/12-octave smoothing. Blue: the reference, with the axis through the tweeter. Orange: the centered cabinet, uncorrected. Green: the same data corrected.](../figures/responses-1m.png){width=100%}
+![Figure 3: The summed two-way at 60°, 120° and 150° above the axis (vertical orbit), microphone at 1 m, measured in 10° steps, 1/12-octave smoothing. Blue: the reference, with the axis through the tweeter. Orange: the centered cabinet, uncorrected. Green: the same data corrected.](../figures/responses-1m.png){width=100%}
 
 ## Putting the Measurements Back
 
@@ -52,8 +68,8 @@ each with a weight that depends on how close its direction is to the ideal one.
 
 Moving a measurement to another distance assumes that, around each driver, the sound behaves like that of
 a point source with some directivity. Farther away, the sound arrives later and its pressure falls in
-inverse proportion to the distance (6 dB per doubling), while its directivity stays the same. Each move is then a delay and a gain.
-The directivity itself can be anything, since the measurements describe it.
+inverse proportion to the distance (6 dB per doubling), while its directivity stays the same. Each move is
+then a delay and a gain. The directivity itself can be anything, since the measurements describe it.
 
 All of this needs four distances in each plane of rotation, which a tape measure provides (Figure 2):
 
@@ -63,8 +79,9 @@ All of this needs four distances in each plane of rotation, which a tape measure
 - each driver's offset from the reference axis;
 - the microphone distance at 0°.
 
-Each driver's height relative to the microphone also enters the distances. In this cabinet it changes
-nothing measurable.
+A driver out of the plane the microphone turns in also has its distances counted in 3D. Standing for its
+horizontal orbit, the two-way has its woofer 205 mm below that plane; taking it as in the plane would cost
+only a few hundredths of a dB here.
 
 The two measurements can be averaged as complex responses, magnitude and phase together, or as powers,
 the squared magnitudes, which ignore the phase. When the two measurements are in phase, both give almost
@@ -75,20 +92,12 @@ edge of a driver's main lobe, where the level changes quickly with angle, the po
 high. The correction here averages the powers and keeps the phase of the complex average (see "The
 Arithmetic" sidebar).
 
-## Testing It
+## The Simulation
 
-Checking the correction on real measurements would need the right answer, that is, the same loudspeaker
-measured on a large turntable with its axis on the baffle, in an anechoic room, at the same positions. A
-simulation provides both setups exactly. I modeled the two-way with the boundary element method (BEM),
-which computes the sound field around the cabinet from what happens on its surface. The whole box is
-included, every face and edge, with the woofer as a rigid recessed cone and the tweeter as a rigid dome.
-Their responses come from the datasheets of a Dayton Audio SIG225-4 woofer and a SICA LP 90.28/N92
-tweeter, crossed at 2 kHz.
-
-The solution covers 20 Hz to 16 kHz in 1/48-octave steps, at 1,728 microphone positions: the horizontal
-and vertical orbits of both setups (the vertical one measured with the cabinet lying on its side), at 1, 2
-and 4 m, every 2.5°. It took 3.8 hours on a Mac mini with the BEM solver I am developing. There is no room
-and no gating, so that only the geometry and the cabinet are tested.
+The BEM computes the sound field around the cabinet from what happens on its surface, every face and edge
+of the box included. It was solved from 20 Hz to 16 kHz in 1/48-octave steps, at 1,728 microphone
+positions: the horizontal and vertical orbits of both setups, at 1, 2 and 4 m, every 2.5°. It took
+3.8 hours on a Mac mini with the BEM solver I am developing.
 
 To compare a corrected measurement with the reference, I take their level difference at every angle and
 frequency, after 1/24-octave smoothing, and compute its RMS value. The points more than 20 dB below the
@@ -96,9 +105,10 @@ on-axis response are left out: in a deep null, a fraction of a degree changes th
 
 ## How Close It Gets
 
-At 1 m with 10° steps, the summed two-way is 2.56 dB RMS off before correction and 0.62 dB after. The
-corrected curves of Figure 3 follow the reference closely at 60° and 120°. At 150° they match up to a few
-kHz and keep some error above.
+In the vertical orbit, at 1 m with 10° steps, the summed two-way is 2.56 dB RMS off before correction and
+0.62 dB after. The corrected curves of Figure 3 follow the reference closely at 60° and 120°. At 150° they
+match up to a few kHz and keep some error above. The horizontal orbit, where only the depth is offset,
+goes from 1.86 to 0.38 dB RMS.
 
 That remaining error comes from the cabinet. With the same drivers as point sources in an infinite baffle,
 the correction leaves 0.09 dB RMS. A cabinet adds diffraction: when the sound running along the baffle
@@ -108,10 +118,11 @@ edge waves properly, because it moves everything as if it came from the driver. 
 where the edge waves are most of what the microphone hears, their interference pattern changes faster with
 angle than 10° steps can follow.
 
-Figure 4 shows where the error sits: behind the cabinet, and on the woofer's side, where the far edge of
-the baffle, 330 mm from the tweeter, adds ripples with a period of only 10° around 6 kHz.
+Figure 4 shows where the error sits in the vertical orbit: behind the cabinet, and below the axis, on the
+woofer's side, where the bottom edge of the baffle, 340 mm below the tweeter, adds ripples with a period
+of only 10° around 6 kHz.
 
-![Figure 4: RMS level error of the summed two-way at each angle (50 Hz to 16 kHz), horizontal orbit. Negative angles are on the woofer's side. Corrected with 10° steps, averaging powers (green) or complex responses (orange), and with 2.5° steps (purple). Gray: uncorrected.](../figures/residual-angle.png){width=100%}
+![Figure 4: RMS level error of the summed two-way at each angle (50 Hz to 16 kHz), vertical orbit. Negative angles are below the axis, on the woofer's side. Corrected with 10° steps, averaging powers (green) or complex responses (orange), and with 2.5° steps (purple). Gray: uncorrected.](../figures/residual-angle.png){width=100%}
 
 A finer angular step removes most of it (Table 1). With 10° steps the residual is about the same at every
 distance, because the interference patterns keep their angular period. With 2.5° steps it falls to 0.14 dB
@@ -125,7 +136,7 @@ cabinet the correction gets the timing of the edge waves slightly wrong, which n
 | Corrected, 5° steps | 0.41 | 0.28 | 0.27 |
 | Corrected, 2.5° steps | 0.38 | 0.14 | 0.09 |
 
-Table 1: RMS level error of the summed two-way on the horizontal orbit (dB), against the angular step.
+Table 1: RMS level error of the summed two-way on the vertical orbit (dB), against the angular step.
 
 Averaging powers matters most with coarse steps. With 10° steps, the complex average leaves 1.21 dB RMS
 at 1 m, twice as much, with notches down to −20 dB behind the cabinet, where the orange curve of Figure 4
@@ -140,33 +151,34 @@ and the Predicted In-Room Response, or PIR, a weighted blend of the three that p
 typical room. All of them are power averages over many directions.
 
 The centered setup lowers them all, because every off-axis position is too far away. Computed from both
-orbits, the PIR is up to 0.95 dB low at 1 m. After correction with 10° steps it is within 0.34 dB of the
-reference, and within 0.08 dB with 2.5° steps (Figure 5). Up to about 3 kHz the corrected curves are
-within 0.1 dB at any step. Above, the deviations come in narrow bands, where the residual errors of
-individual directions do not cancel in the average.
+orbits, the PIR is up to 1.0 dB low at 1 m. After correction with 10° steps it is within 0.35 dB of the
+reference, and within 0.10 dB with 2.5° steps (Figure 5). Up to about 3 kHz the corrected PIR is within
+0.05 dB at any step. Above, the deviations come in narrow bands, where the residual errors of individual
+directions do not cancel in the average.
 
-![Figure 5: The PIR and the sound power of the two-way at 1 m, computed from both orbits, against the reference: uncorrected, and corrected with 10° and 2.5° steps.](../figures/spatial-1m.png){width=100%}
+![Figure 5: The PIR and the sound power of the two-way at 1 m, computed from both orbits, against the reference: uncorrected, and corrected with 10° and 2.5° steps.](../figures/spatial-upright-1m.png){width=100%}
 
-Part of what remains with 10° steps belongs to the standard's own sampling. In front of this cabinet, the
-far edge's ripple has a period close to 10° around 6 to 8 kHz. The reference listening window itself,
-computed from its seven horizontal directions 10° apart, differs by up to 0.6 to 0.7 dB from the same window
-averaged every 2.5° at those frequencies. With 10° steps, a few tenths of a dB in narrow bands is the
-resolution of the measurement, corrected or not.
+Part of what remains with 10° steps belongs to the standard's own sampling. The reference listening window,
+computed from directions 10° apart, already differs by up to 0.3 dB around 13 kHz from the same window
+averaged every 2.5°. With 10° steps, a few tenths of a dB in narrow bands is the resolution of the
+measurement, corrected or not.
 
 ## The Lateral Offset
 
 An error of 10 mm on the depth or on the lateral offset, or of 20 mm on the microphone distance, changes
-the PIR by less than 0.1 dB, so a tape measure is accurate enough. Because the microphone was moved sideways
-to face the tweeter, the correction must also know on which side of the rotation axis the reference axis
-lies. With the lateral offset left at zero, as for a symmetric loudspeaker, it places the measurements up to
-11° away from where they were taken at 1 m, and up to 21° with the wrong sign. The individual curves then
-keep 1.4 and 2.0 dB RMS of error, two to three times the residual with the right offset.
+the PIR by less than 0.1 dB, so a tape measure is accurate enough.
+
+Lying on its side, the two-way also needs its lateral offset: the tweeter is 120 mm from the rotation axis,
+and the correction must know on which side. With the offset left at zero, as for a symmetric loudspeaker,
+it places the measurements up to 11° away from where they were taken at 1 m, and up to 21° with the wrong
+sign. The individual curves of the vertical orbit then keep 1.4 and 2.0 dB RMS of error, two to three
+times the residual with the right offset.
 
 With complex averaging, either mistake is worse than no correction at all. The two measurements around each
-direction, moved with the wrong delays, no longer line up in time and cancel each other. Computed from the
-horizontal orbit alone, the PIR ends up 3.7 dB off at 1 m, against 1.2 dB for the raw data. With the powers
-averaged, it stays within about 0.5 dB, as with the right offset on that orbit, while the individual curves
-keep the errors above.
+direction, moved with the wrong delays, no longer line up in time and cancel each other. Computed from both
+orbits, the PIR ends up 1.7 to 1.8 dB off at 1 m, against 1.0 dB for the raw data. With the powers
+averaged, it stays within 0.4 dB, as with the right offset, while the individual curves keep the errors
+above.
 
 To check the sign, turn the table to +90° and look at which side of the cabinet faces the microphone. The
 lateral offset is positive if the reference axis lies on that side.
@@ -184,17 +196,18 @@ frequency, the cabinet's acoustic center, the point the low-frequency sound appe
 about 130 mm in front of the baffle, as Vanderkooy showed [2]. From 1 to 2 m the level then falls by 6.6 dB
 in front of the cabinet and 5.5 dB behind it, where the point-source model assumes 6 dB everywhere.
 
-At high frequency, the diffraction pattern itself changes with distance. Rebuilt from 1 m, the 2 m data
-keep 0.67 dB RMS of error on the summed loudspeaker, even with 2.5° steps, where measurements taken at 2 m
-keep 0.14 dB. When the room allows it, measure at the distance you want the results at.
+At high frequency, the diffraction pattern itself changes with distance. Rebuilt from 1 m, the 2 m data of
+the vertical orbit keep 0.67 dB RMS of error on the summed loudspeaker, even with 2.5° steps, where
+measurements taken at 2 m keep 0.14 dB. When the room allows it, measure at the distance you want the
+results at.
 
 ## Limits
 
 This is a free-field study. In a real room the measurements are gated to remove the reflections, and the
 delays the correction applies, up to 1 ms behind the cabinet, move the sound relative to the gate. That
-interaction is not simulated. The drivers are rigid, without break-up, and the cabinet's edges are sharp.
-Rounded edges diffract less, which should help the correction. Only one cabinet was tested, and a tower or
-a tweeter in a waveguide will behave differently.
+interaction is not simulated. The drivers are rigid, and the cabinet's edges are sharp. Rounded edges
+diffract less, which should help the correction. Only one cabinet was tested, and a tower or a tweeter in a
+waveguide will behave differently.
 
 The full study also covers a three-way monitor in the same cabinet, with an analytical model of edge
 diffraction instead of the BEM [1]. That model reaches the same conclusions below 3 kHz but underestimates
@@ -219,11 +232,11 @@ The study's code and data, and a technical report with every formula, are on Git
 >
 > $$|H|^2 = (1-u)\,|H_a|^2 + u\,|H_b|^2$$
 >
-> An example, at 1 m in the centered setup: the measurement at a nominal 90° was taken 1.059 m from the
-> tweeter, which heard it at 104.5°. The tweeter's response at a true 90° is rebuilt from the measurements
-> taken at nominal 70° and 80°, which the tweeter heard at 82.4° and 93.6°. The 80° one gets a weight of
-> 0.68, the 70° one 0.32. Both are brought to 1 m: the 80° one is advanced by 0.089 ms and raised by
-> 0.26 dB, the 70° one advanced by 0.017 ms and raised by 0.05 dB.
+> An example, for the two-way lying on its side at 1 m (Figure 2): the measurement at a nominal 90° was
+> taken 1.059 m from the tweeter, which heard it at 104.5°. The tweeter's response at a true 90° is rebuilt
+> from the measurements taken at nominal 70° and 80°, which the tweeter heard at 82.4° and 93.6°. The 80°
+> one gets a weight of 0.68, the 70° one 0.32. Both are brought to 1 m: the 80° one is advanced by
+> 0.089 ms and raised by 0.26 dB, the 70° one advanced by 0.017 ms and raised by 0.05 dB.
 
 > **Sidebar: Checklist for a Small Turntable**
 >
@@ -232,7 +245,7 @@ The study's code and data, and a technical report with every formula, are on Git
 > 2. Measure the depth and the lateral offset to within a centimeter. Give the lateral offset its sign:
 >    positive if the reference axis lies on the side the microphone faces at +90°.
 > 3. Give each driver its offset from the reference axis in the plane of rotation. A woofer beside the
->    tweeter in a horizontal cabinet is not at zero.
+>    tweeter, as in a two-way lying on its side, is not at zero.
 > 4. Average the powers between measured directions.
 > 5. Use 5° steps or finer if the response above a few kHz matters, 2.5° to get closest.
 > 6. Measure at the distance you want the results at, when the room allows it.
