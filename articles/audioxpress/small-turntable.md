@@ -105,10 +105,12 @@ its own $\rho_k$ and $\varphi_k$.
 
 In the vertical orbit, with the two-way on its side, both drivers lie in the plane the microphone turns in.
 In the horizontal orbit they do not: with the two-way standing upright, the microphone is at the tweeter's
-height and the woofer 205 mm lower, so the woofer is a little farther from the microphone, at every angle,
-than the four distances alone would say. With a driver's height $h$ above or below the plane, the
-correction takes $\rho = \sqrt{|P - S|^2 + h^2}$. For this two-way, leaving the height out changes the
-results by only a few hundredths of a dB RMS. It could matter more for a driver farther from the plane
+height and the woofer 205 mm lower. With a driver's height $h$ above or below the plane, the correction
+computes both distances in 3D, $\rho = \sqrt{|P - S|^2 + h^2}$, where the microphone was and where it
+should have been. The woofer stays 205 mm below the tweeter's axis, as in a measurement with the axis on
+the baffle; only the change of distance between the two positions is corrected. At 0° the microphone is
+already where it should be, and the measurement stands as it is. For this two-way, leaving the height out
+changes the results by only a few hundredths of a dB RMS. It could matter more for a driver farther from the plane
 relative to the microphone distance, or in asymmetric layouts, which this study did not simulate.
 
 The two measurements whose directions $\varphi_a$ and $\varphi_b$ bracket the ideal one, $\varphi^*$, get
@@ -187,6 +189,14 @@ delay of the position the microphone was really at. That error should grow with 
 the reference point, relative to the measurement distance, as on a tall tower measured up close, which this
 study did not simulate. Measuring the drivers separately remains the cleaner way, and it is the one a
 crossover is designed from.
+
+A passive loudspeaker can often still be measured driver by driver, through its crossover: one section at a
+time on bi-wire terminals, or with the other drivers disconnected. In the usual parallel crossover, driven
+by an amplifier that holds its output voltage, each section gives its driver the same voltage whether the
+others are connected or not, so the drivers measured this way add up exactly to the whole loudspeaker. This
+does not hold for a series crossover, or for sections that share components. Disconnect the other drivers
+rather than short them: a woofer's series inductor into a short is nearly a short for the amplifier at low
+frequency.
 
 ## The Spatial Averages
 
@@ -284,7 +294,8 @@ The study's code and data, and a technical report with every formula, are on Git
 >    positive if the reference axis lies on the side the microphone faces at +90°.
 > 3. Give each driver its offset from the reference axis in the plane of rotation. A woofer beside the
 >    tweeter, as in a two-way lying on its side, is not at zero.
-> 4. Measure the drivers on their own when you can. A whole loudspeaker can be corrected as one source at
+> 4. Measure the drivers on their own when you can, through the crossover on a passive loudspeaker (bi-wire
+>    terminals, or the other drivers disconnected). A whole loudspeaker can be corrected as one source at
 >    the reference point, a little less well around the crossover.
 > 5. Average the powers between measured directions.
 > 6. Use 5° steps or finer if the response above a few kHz matters, 2.5° to get closest.
