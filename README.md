@@ -104,7 +104,7 @@ Huygens, is not public; its pressures are in [`data/bem/`](data/bem/).
   about 0.1 dB of the rigorous ones, and the lateral offset is just as critical.
 - **Above, there is more diffraction than the edge model predicts.** The rigid dome radiates much
   wider than its aperture model (−6 dB at 95° instead of 75° at 6.35 kHz), so more sound reaches the
-  edges; the far edge of the baffle, 330 mm from the tweeter, adds interference ripples with a 10°
+  edges; the far edge of the baffle, 340 mm from the tweeter, adds interference ripples with a 10°
   period at 6 kHz in front, on the woofer's side, and the rear patterns are finer.
 - **The residual is mostly the angular step.** With 10° steps about 0.6 dB RMS remains on the summed
   loudspeaker at every distance; 2.5° steps bring it to 0.1–0.15 dB at 2 and 4 m. At 1 m about 0.4 dB

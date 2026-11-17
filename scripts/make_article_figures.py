@@ -187,7 +187,7 @@ def top_view():
     x_mic = -W / 2 + 40
     ax.plot([x_mic - 8, ref_x - 18], [mic_z, mic_z], color=ps.AXIS, lw=0.5)
     dim(ax, (x_mic, 0), (x_mic, mic_z), "", ps.INK_2)
-    ax.text(x_mic - 14, 330, "microphone distance\n(1 m or 2 m)", fontsize=9, color=ps.INK_2, ha="right", va="center")
+    ax.text(x_mic - 14, 330, "microphone distance\n(1, 2 or 4 m)", fontsize=9, color=ps.INK_2, ha="right", va="center")
     # Positive angles.
     r = 520
     t = np.radians(np.linspace(14, 34, 30))
