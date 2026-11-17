@@ -105,10 +105,12 @@ its own $\rho_k$ and $\varphi_k$.
 
 In the vertical orbit, with the two-way on its side, both drivers lie in the plane the microphone turns in.
 In the horizontal orbit they do not: with the two-way standing upright, the microphone is at the tweeter's
-height and the woofer 205 mm lower, so the woofer is a little farther from the microphone, at every angle,
-than the four distances alone would say. With a driver's height $h$ above or below the plane, the
-correction takes $\rho = \sqrt{|P - S|^2 + h^2}$. For this two-way, leaving the height out changes the
-results by only a few hundredths of a dB RMS. It could matter more for a driver farther from the plane
+height and the woofer 205 mm lower. With a driver's height $h$ above or below the plane, the correction
+computes both distances in 3D, $\rho = \sqrt{|P - S|^2 + h^2}$, where the microphone was and where it
+should have been. The woofer stays 205 mm below the tweeter's axis, as in a measurement with the axis on
+the baffle; only the change of distance between the two positions is corrected. At 0° the microphone is
+already where it should be, and the measurement stands as it is. For this two-way, leaving the height out
+changes the results by only a few hundredths of a dB RMS. It could matter more for a driver farther from the plane
 relative to the microphone distance, or in asymmetric layouts, which this study did not simulate.
 
 The two measurements whose directions $\varphi_a$ and $\varphi_b$ bracket the ideal one, $\varphi^*$, get
