@@ -202,6 +202,103 @@ def top_view():
     plt.rcParams["axes.grid"] = True
 
 
+def symbols_view(theta_deg=35.0, r=520.0):
+    """Setup (b) seen from above with the symbols of the equations: the rotation axis at the
+    origin, the reference point (L, D), the driver S (the woofer), the microphone where it was, M,
+    and where it should have been, M*, at the nominal angle theta; rho and phi seen from S. The
+    microphone distance is not to scale."""
+    plt.rcParams["axes.grid"] = False
+    mpl.rcParams["mathtext.fontset"] = "stix"
+    fig, ax = plt.subplots(figsize=(6.4, 5.4))
+    ax.set_aspect("equal")
+    ax.axis("off")
+    L, Dp, s = 120.0, 145.0, -205.0
+    accent, blue, green, red = "#c4501f", ps.SLOTS[0], ps.SLOTS[2], "#e34948"
+    fs = 12
+    th = np.radians(theta_deg)
+    R = np.array([L, Dp])
+    S = np.array([L + s, Dp])
+    M0 = np.array([L, Dp + r])
+    M = np.array([L * np.cos(th) + (Dp + r) * np.sin(th), -L * np.sin(th) + (Dp + r) * np.cos(th)])
+    Ms = R + r * np.array([np.sin(th), np.cos(th)])
+    a0 = np.arctan2(M0[0], M0[1])
+    # Turntable, cabinet and drivers.
+    ax.add_patch(Circle((0, 0), 200, fc=sch.DISC_TOP, ec="#8fa3bb", lw=0.9))
+    ax.add_patch(Rectangle((-W / 2, -D / 2), W, D, fc=sch.FACE_TOP, ec=sch.EDGE, lw=1.1, alpha=0.93))
+    for x, half, depth in ((L + s, 84, 60), (L, 22, 30)):
+        ax.add_patch(Polygon([(x - half, Dp), (x + half, Dp), (x + 0.35 * half, Dp - depth),
+                              (x - 0.35 * half, Dp - depth)], fc=sch.CONE, ec="none", alpha=0.85))
+    # Where the microphone goes: around the axis (as measured), around (L, D) (as it should).
+    a = np.linspace(0, np.radians(58), 200)
+    rm = float(np.hypot(*M0))
+    ax.plot(rm * np.sin(a0 + a), rm * np.cos(a0 + a), color=ps.INK_2, lw=0.7, ls=(0, (3, 2)))
+    ax.plot(R[0] + r * np.sin(a), R[1] + r * np.cos(a), color=green, lw=0.7, ls=(0, (3, 2)))
+    # Axes at the rotation axis.
+    ax.add_patch(FancyArrowPatch((0, 0), (150, 0), arrowstyle="-|>", mutation_scale=9, lw=1.0, color=ps.INK,
+                                 zorder=6))
+    ax.add_patch(FancyArrowPatch((0, 0), (0, 105), arrowstyle="-|>", mutation_scale=9, lw=1.0, color=ps.INK,
+                                 zorder=6))
+    ax.text(162, 0, "$x$", fontsize=fs + 1, color=ps.INK, va="center", ha="left", zorder=6)
+    ax.text(14, 100, "$z$", fontsize=fs + 1, color=ps.INK, va="center", ha="left", zorder=6)
+    ax.plot(0, 0, marker="o", ms=4, color=ps.INK, zorder=7)
+    ax.annotate("rotation axis, at the origin", (-4, -6), xytext=(-130, -110), fontsize=9, color=ps.INK,
+                ha="center", va="center", arrowprops=dict(arrowstyle="-", lw=0.6, color=ps.INK_2))
+    # The microphone turned by theta about the axis.
+    reach = 440.0
+    for ang in (a0, a0 + th):
+        ax.plot([0, reach * np.sin(ang)], [0, reach * np.cos(ang)], color=ps.AXIS, lw=0.7)
+
+    def arc(c, r0, a_from, a_to, color, label, dr=20):
+        aa = np.linspace(a_from, a_to, 40)
+        ax.plot(c[0] + r0 * np.sin(aa), c[1] + r0 * np.cos(aa), color=color, lw=0.9)
+        am = 0.5 * (a_from + a_to)
+        ax.text(c[0] + (r0 + dr) * np.sin(am), c[1] + (r0 + dr) * np.cos(am), label, fontsize=fs,
+                color=color, ha="center", va="center")
+
+    arc((0, 0), 400, a0, a0 + th, ps.INK_2, r"$\theta$")
+    # Reference axis: the microphone distance r along it.
+    ax.plot([L, L], [Dp, M0[1]], color=ps.INK_2, lw=0.8, ls=(0, (4, 2)))
+    ax.add_patch(FancyArrowPatch((L - 14, Dp), (L - 14, M0[1]), arrowstyle="<|-|>", mutation_scale=8, lw=0.8,
+                                 color=ps.INK_2, shrinkA=0, shrinkB=0))
+    ax.text(L - 30, Dp + 0.62 * r, "$r$", fontsize=fs, color=ps.INK_2, ha="center", va="center",
+            bbox=dict(fc="white", ec="none", pad=0.8))
+    # Where it should be: theta about (L, D).
+    ax.plot([R[0], Ms[0]], [R[1], Ms[1]], color=green, lw=0.9)
+    arc(R, 120, 0, th, green, r"$\theta$")
+    # Seen from the driver: rho and phi.
+    phi = np.arctan2(M[0] - S[0], M[1] - S[1])
+    ax.plot([S[0], S[0]], [S[1], 560], color=blue, lw=0.6, ls=(0, (2, 2)))
+    ax.plot([S[0], M[0]], [S[1], M[1]], color=blue, lw=1.2)
+    arc(S, 150, 0, phi, blue, r"$\varphi$")
+    mid = S + 0.8 * (M - S)
+    ax.text(mid[0] - 10, mid[1] + 22, r"$\rho$", fontsize=fs, color=blue, ha="center", va="center")
+    # Points.
+    for P, color, name, off, ha in ((R, red, "$(L,\\,D)$", (30, -24), "left"),
+                                    (S, blue, "$S$", (-14, 20), "right"),
+                                    (M0, ps.INK_2, "$(L,\\,D + r)$", (-14, 14), "right"),
+                                    (M, blue, "$M$", (8, -26), "left"),
+                                    (Ms, green, "$M^*$", (-12, 16), "right")):
+        ax.plot(*P, marker="o", ms=6.5, color=color, mec="white", mew=0.8, zorder=8)
+        ax.text(P[0] + off[0], P[1] + off[1], name, fontsize=fs, color=color, ha=ha, va="center", zorder=8)
+    # The other three distances.
+    y_dim = -D / 2 - 45
+    ax.plot([0, 0], [-8, y_dim - 8], color=ps.AXIS, lw=0.5)
+    ax.plot([L, L], [-D / 2, y_dim - 8], color=ps.AXIS, lw=0.5)
+    dim(ax, (0, y_dim), (L, y_dim), "$L$", accent, offset=(0, -24), fs=fs)
+    x_dim = -W / 2 - 40
+    ax.plot([x_dim - 6, -8], [0, 0], color=ps.AXIS, lw=0.5)
+    ax.plot([x_dim - 6, -W / 2], [Dp, Dp], color=ps.AXIS, lw=0.5)
+    dim(ax, (x_dim, 0), (x_dim, Dp), "$D$", accent, offset=(-26, 0), fs=fs)
+    z_s = 560
+    ax.plot([L, L - 22], [z_s, z_s], color=ps.AXIS, lw=0.5)
+    dim(ax, (L + s, z_s), (L - 14, z_s), "$s$", ps.INK_2, offset=(0, 20), fs=fs)
+    ax.set_xlim(-400, 640)
+    ax.set_ylim(-250, 720)
+    save(fig, "symbols-view")
+    mpl.rcParams["mathtext.fontset"] = "dejavusans"
+    plt.rcParams["axes.grid"] = True
+
+
 def errors_geometry():
     """What the centered setup does to the measurements, seen from the drivers."""
     angles = np.arange(-180, 181, 1.0)
@@ -514,6 +611,7 @@ def main():
     setups_3d("three")
     setups_3d("two")
     top_view()
+    symbols_view()
     errors_geometry()
     responses("1m")
     spatial("1m")
