@@ -1,7 +1,7 @@
 ---
 title: "Polar Measurements on a Small Turntable"
 subtitle: "When the cabinet cannot turn about its baffle, the off-axis measurements are taken too far away and from the wrong direction. Geometry can remove most of the error. A boundary-element simulation shows how close the corrected data come to the real thing, and where the cabinet sets the limit."
-author: "By Arnaud Demion"
+author: "Arnaud Demion"
 ---
 
 A loudspeaker's off-axis behavior is measured by turning it in front of a fixed microphone. For the
@@ -123,7 +123,7 @@ Figure 4 shows where the error sits in the vertical orbit: behind the cabinet, a
 woofer's side, where the bottom edge of the baffle, 340 mm below the tweeter, adds ripples with a period
 of only 10° around 6 kHz.
 
-![Figure 4: RMS level error of the summed two-way at each angle (50 Hz to 16 kHz), vertical orbit. Negative angles are below the axis, on the woofer's side. Corrected with 10° steps, averaging powers (green) or complex responses (orange), and with 2.5° steps (purple). Gray: uncorrected.](../figures/residual-angle.png){width=100%}
+![Figure 4: RMS level error of the summed two-way at each angle (50 Hz to 16 kHz), vertical orbit, microphone at 1 m (left) and 2 m (right). Negative angles are below the axis, on the woofer's side. Corrected with 10° steps, averaging powers (green) or complex responses (orange), and with 2.5° steps (purple). Gray: uncorrected.](../figures/residual-angle.png){width=100%}
 
 A finer angular step removes most of it (Table 1). With 10° steps the residual is about the same at every
 distance, because the interference patterns keep their angular period. With 2.5° steps it falls to 0.14 dB
