@@ -86,10 +86,10 @@ All of this needs four distances in each plane of rotation, which a tape measure
 - the microphone distance $r$ at 0°.
 
 Put the rotation axis at the origin, with $x$ toward the side the microphone moves to at positive angles
-and $z$ toward the front, and write positions as $(x, z)$. The reference point is then at $(L, D)$, the
-driver at $S = (L + s, D)$, and the microphone starts at $(L, D + r)$. At the nominal angle $\theta$, the
-microphone was at $M$, its starting point turned by $\theta$ about the axis, when it should have been at
-$M^*$, at the same angle on a circle of radius $r$ around the reference point:
+and $z$ toward the front, and write positions as $(x, z)$ (Figure 4). The reference point is then at
+$(L, D)$, the driver at $S = (L + s, D)$, and the microphone starts at $(L, D + r)$. At the nominal angle
+$\theta$, the microphone was at $M$, its starting point turned by $\theta$ about the axis, when it should
+have been at $M^*$, at the same angle on a circle of radius $r$ around the reference point:
 
 $$M = \begin{pmatrix} L\cos\theta + (D + r)\sin\theta \\ -L\sin\theta + (D + r)\cos\theta \end{pmatrix}, \qquad M^* = \begin{pmatrix} L + r\sin\theta \\ D + r\cos\theta \end{pmatrix}$$
 
@@ -101,11 +101,15 @@ $$\rho = |P - S|, \qquad \varphi = \operatorname{atan2}(P_x - S_x,\ P_z - S_z)$$
 $M^*$ gives the ideal distance $\rho^*$ and direction $\varphi^*$, and the measurement taken at each angle
 its own $\rho_k$ and $\varphi_k$.
 
-A driver can also sit above or below the plane the microphone turns in. When the two-way stands upright for
-its horizontal orbit, the microphone is at the tweeter's height and the woofer 205 mm lower, so the woofer
-is a little farther from the microphone, at every angle, than the four distances alone would say. With its
-height $h$ above or below the plane, the correction takes $\rho = \sqrt{|P - S|^2 + h^2}$. Here it hardly
-matters: leaving the height out changes the results by only a few hundredths of a dB RMS.
+![Figure 4: The two-way lying on its side, seen from above, with the symbols of the equations: the rotation axis at the origin of $x$ and $z$, the reference point $(L, D)$, a driver at $S$ (here the woofer, so $s$ is negative), and the microphone at the nominal angle $\theta$, where it was, $M$, and where it should have been, $M^*$. Seen from the driver, $M$ lies at the distance $\rho$ and the angle $\varphi$. The microphone distance $r$ is not to scale.](../figures/symbols-view.png){width=62%}
+
+In the vertical orbit, with the two-way on its side, both drivers lie in the plane the microphone turns in.
+In the horizontal orbit they do not: with the two-way standing upright, the microphone is at the tweeter's
+height and the woofer 205 mm lower, so the woofer is a little farther from the microphone, at every angle,
+than the four distances alone would say. With a driver's height $h$ above or below the plane, the
+correction takes $\rho = \sqrt{|P - S|^2 + h^2}$. For this two-way, leaving the height out changes the
+results by only a few hundredths of a dB RMS. It could matter more for a driver farther from the plane
+relative to the microphone distance, or in asymmetric layouts, which this study did not simulate.
 
 The two measurements whose directions $\varphi_a$ and $\varphi_b$ bracket the ideal one, $\varphi^*$, get
 the weights $1 - u$ and $u$, with $u = (\varphi^* - \varphi_a)/(\varphi_b - \varphi_a)$. They can be
@@ -147,11 +151,11 @@ edge waves properly, because it moves everything as if it came from the driver. 
 where the edge waves are most of what the microphone hears, their interference pattern changes faster with
 angle than 10° steps can follow.
 
-Figure 4 shows where the error sits in the vertical orbit: behind the cabinet, and below the axis, on the
+Figure 5 shows where the error sits in the vertical orbit: behind the cabinet, and below the axis, on the
 woofer's side, where the bottom edge of the baffle, 340 mm below the tweeter, adds ripples with a period
 of only 10° around 6 kHz.
 
-![Figure 4: RMS level error of the summed two-way at each angle (50 Hz to 16 kHz), vertical orbit, microphone at 1 m (left) and 2 m (right). Negative angles are below the axis, on the woofer's side. Corrected with 10° steps, averaging powers (green) or complex responses (orange), and with 2.5° steps (purple). Gray: uncorrected.](../figures/residual-angle.png){width=100%}
+![Figure 5: RMS level error of the summed two-way at each angle (50 Hz to 16 kHz), vertical orbit, microphone at 1 m (left) and 2 m (right). Negative angles are below the axis, on the woofer's side. Corrected with 10° steps, averaging powers (green) or complex responses (orange), and with 2.5° steps (purple). Gray: uncorrected.](../figures/residual-angle.png){width=100%}
 
 A finer angular step removes most of it (Table 1). With 10° steps the residual is about the same at every
 distance, because the interference patterns keep their angular period. With 2.5° steps it falls to 0.14 dB
@@ -169,7 +173,7 @@ Table 1: RMS level error of the summed two-way on the vertical orbit (dB), again
 
 Averaging powers matters most with coarse steps. With 10° steps, the complex average leaves 1.21 dB RMS
 at 1 m, twice as much, with notches more than 20 dB deep behind the cabinet, where the orange curve of
-Figure 4 peaks. With 2.5° steps, neighboring measurements are in phase again and both averages agree.
+Figure 5 peaks. With 2.5° steps, neighboring measurements are in phase again and both averages agree.
 
 ## Drivers One by One, or the Whole Loudspeaker
 
@@ -194,11 +198,11 @@ typical room. All of them are power averages over many directions.
 
 The centered setup lowers them all, because every off-axis position is too far away. Computed from both
 orbits, the PIR is up to 1.0 dB low at 1 m. After correction with 10° steps it is within 0.35 dB of the
-reference, and within 0.10 dB with 2.5° steps (Figure 5). Up to about 3 kHz the corrected PIR is within
+reference, and within 0.10 dB with 2.5° steps (Figure 6). Up to about 3 kHz the corrected PIR is within
 0.05 dB at any step. Above, the deviations come in narrow bands, where the residual errors of individual
 directions do not cancel in the average.
 
-![Figure 5: The PIR and the sound power of the two-way at 1 m, computed from both orbits, against the reference: uncorrected, and corrected with 10° and 2.5° steps.](../figures/spatial-upright-1m.png){width=100%}
+![Figure 6: The PIR and the sound power of the two-way at 1 m, computed from both orbits, against the reference: uncorrected, and corrected with 10° and 2.5° steps.](../figures/spatial-upright-1m.png){width=100%}
 
 Part of what remains with 10° steps belongs to the standard's own sampling. The reference listening window,
 computed from directions 10° apart, already differs by up to 0.3 dB around 13 kHz from the same window
@@ -265,9 +269,9 @@ The study's code and data, and a technical report with every formula, are on Git
 
 > **Sidebar: A Worked Example**
 >
-> The two-way lies on its side, the microphone at 1 m (Figure 2): $D$ = 145 mm, $L$ = +120 mm, $r$ = 1 m,
-> and $s$ = 0 for the tweeter. The measurement at a nominal 90° was taken at $M$ = (1145, −120) mm, 1.059 m
-> from the tweeter, which heard it at 104.5°. The tweeter's response at a true 90° is rebuilt from the
+> The two-way lies on its side, the microphone at 1 m (Figures 2 and 4): $D$ = 145 mm, $L$ = +120 mm,
+> $r$ = 1 m, and $s$ = 0 for the tweeter. The measurement at a nominal 90° was taken at
+> $M$ = (1145, −120) mm, 1.059 m from the tweeter, which heard it at 104.5°. The tweeter's response at a true 90° is rebuilt from the
 > measurements taken at nominal 70° and 80°, which the tweeter heard at 82.4° and 93.6°. The 80° one gets
 > the weight $u$ = 0.68, the 70° one 0.32. Both are brought to 1 m: the 80° one is advanced by 0.089 ms and
 > raised by 0.26 dB, the 70° one advanced by 0.017 ms and raised by 0.05 dB.
