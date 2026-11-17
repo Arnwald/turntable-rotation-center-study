@@ -26,9 +26,8 @@ moving the measurements from where they were taken to where they should have bee
 in it.
 
 The loudspeaker studied is an ordinary two-way: a 24-liter closed box, 290 mm wide, 440 mm high and 290 mm
-deep, with a Dayton Audio SIG225-4 8-inch woofer and a SICA LP 90.28/N92 1.1-inch dome tweeter 205 mm
-above it. Their responses follow the manufacturers' datasheets, and a crossover sums them: each driver is
-equalized on axis to a fourth-order Linkwitz-Riley target at 2 kHz. In the simulation the woofer is a rigid
+deep, with an 8-inch woofer and a 1.1-inch dome tweeter 205 mm above it. Each driver is equalized on axis
+to a fourth-order Linkwitz-Riley target at 2 kHz. In the simulation the woofer is a rigid
 recessed cone and the tweeter a rigid dome. A two-way of this size keeps the drawings and the computations
 simple, and it would fit on a small turntable more easily than a large three-way tower. The geometry is the
 same, though, and the errors to correct grow with the depth of the cabinet.
