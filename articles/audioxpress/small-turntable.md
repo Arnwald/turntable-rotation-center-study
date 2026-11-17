@@ -45,14 +45,14 @@ it, so the microphone has to be moved 120 mm sideways to face it at 0°.
 ![Figure 2: The two-way lying on its side, seen from above, with the four distances the correction needs. The lateral offset is positive here, because the reference axis lies on the side the microphone moves toward at positive angles.](../figures/top-view.png){width=62%}
 
 Off axis, the microphone is then farther from the drivers than intended. In the vertical orbit, behind the
-cabinet, at a nominal 1 m, it is up to a third farther away, so the response reads 2.5 to 2.8 dB low, and
-the sound arrives up to 1 ms late. Each driver is also heard from another direction than the nominal
-angle, by as much as 15°. Since the microphone was moved sideways, the errors are not the same on the
+cabinet, at a nominal 1 m, it is up to 34% farther from the tweeter and 38% farther from the woofer, so
+their responses read up to 2.5 and 2.8 dB low, and the sound arrives up to 1 ms late. Each driver is also
+heard from another direction than the nominal angle, by as much as 15°. Since the microphone was moved sideways, the errors are not the same on the
 woofer's side and on the other. At 2 m the level and direction errors are about halved, while the delay
 stays the same, because it depends on where the axis is, whatever the distance.
 
 Figure 3 shows what this does to the summed loudspeaker in the vertical orbit. At 60° above the axis, the
-uncorrected response is 1 to 2 dB low. At 150°, it also has notches around the 2 kHz crossover that the
+uncorrected response is up to 2 dB low. At 150°, it also has notches around the 2 kHz crossover that the
 real response does not have. Heard from the wrong place, the woofer and the tweeter reach the microphone
 with another relative delay, and they no longer add up the same way.
 
@@ -140,8 +140,8 @@ cabinet the correction gets the timing of the edge waves slightly wrong, which n
 Table 1: RMS level error of the summed two-way on the vertical orbit (dB), against the angular step.
 
 Averaging powers matters most with coarse steps. With 10° steps, the complex average leaves 1.21 dB RMS
-at 1 m, twice as much, with notches down to −20 dB behind the cabinet, where the orange curve of Figure 4
-peaks. With 2.5° steps, neighboring measurements are in phase again and both averages agree.
+at 1 m, twice as much, with notches more than 20 dB deep behind the cabinet, where the orange curve of
+Figure 4 peaks. With 2.5° steps, neighboring measurements are in phase again and both averages agree.
 
 ## Drivers One by One, or the Whole Loudspeaker
 
@@ -207,8 +207,10 @@ at 0° from 1 m, and 5.9° from 2 m.
 
 The correction cannot account for the cabinet's sound field changing shape between 1 and 2 m. At low
 frequency, the cabinet's acoustic center, the point the low-frequency sound appears to come from, sits
-about 130 mm in front of the baffle, as Vanderkooy showed [2]. From 1 to 2 m the level then falls by 6.6 dB
-in front of the cabinet and 5.5 dB behind it, where the point-source model assumes 6 dB everywhere.
+about 130 mm in front of the baffle, as Vanderkooy showed [2]. A source there loses 6.6 dB from 1 to 2 m in
+front of the cabinet and 5.5 dB behind it, where the point-source model, which puts it on the baffle,
+assumes 6 dB. Rebuilt from 1 m, the simulated 2 m data come out about 0.5 dB too high in front at low
+frequency, and 0.4 dB too low behind.
 
 At high frequency, the diffraction pattern itself changes with distance. Rebuilt from 1 m, the 2 m data of
 the vertical orbit keep 0.67 dB RMS of error on the summed loudspeaker, even with 2.5° steps, where
