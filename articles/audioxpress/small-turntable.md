@@ -47,9 +47,10 @@ it, so the microphone has to be moved 120 mm sideways to face it at 0°.
 Off axis, the microphone is then farther from the drivers than intended. In the vertical orbit, behind the
 cabinet, at a nominal 1 m, it is up to 34% farther from the tweeter and 38% farther from the woofer, so
 their responses read up to 2.5 and 2.8 dB low, and the sound arrives up to 1 ms late. Each driver is also
-heard from another direction than the nominal angle, by as much as 15°. Since the microphone was moved sideways, the errors are not the same on the
-woofer's side and on the other. At 2 m the level and direction errors are about halved, while the delay
-stays the same, because it depends on where the axis is, whatever the distance.
+heard from another direction than the nominal angle, by as much as 15°. Since the microphone was moved
+sideways, the errors are not the same on the woofer's side and on the other. At 2 m the level and direction
+errors are about halved, while the delay stays the same, because it depends on where the axis is, whatever
+the distance.
 
 Figure 3 shows what this does to the summed loudspeaker in the vertical orbit. At 60° above the axis, the
 uncorrected response is up to 2 dB low. At 150°, it also has notches around the 2 kHz crossover that the
@@ -61,37 +62,65 @@ with another relative delay, and they no longer add up the same way.
 ## Putting the Measurements Back
 
 The correction works one driver at a time, each measured on its own. For each nominal angle, it asks where
-the microphone should
-have been, and which measurements were taken closest to that direction, as seen from the driver. Both
-questions have exact answers, because the geometry of the setup is known. The correction takes the two
-measurements whose directions bracket the ideal one, moves each to the ideal distance, and averages them,
-each with a weight that depends on how close its direction is to the ideal one.
+the microphone should have been, and which measurements were taken closest to that direction, as seen from
+the driver. Both questions have exact answers, because the geometry of the setup is known. The correction
+takes the two measurements whose directions bracket the ideal one, moves each to the ideal distance, and
+averages them, each with a weight that depends on how close its direction is to the ideal one.
 
 Moving a measurement to another distance assumes that, around each driver, the sound behaves like that of
 a point source with some directivity. Farther away, the sound arrives later and its pressure falls in
 inverse proportion to the distance (6 dB per doubling), while its directivity stays the same. Each move is
-then a delay and a gain. The directivity itself can be anything, since the measurements describe it.
+then a delay and a gain. The directivity itself can be anything, since the measurements describe it. A
+measurement $H_k$ taken at the distance $\rho_k$ from the driver becomes, at the ideal distance $\rho^*$,
+
+$$H_k'(f) = \frac{\rho_k}{\rho^*}\,H_k(f)\,e^{-j 2\pi f(\rho^* - \rho_k)/c}$$
+
+where $c$ is the speed of sound: a gain of $20\log_{10}(\rho_k/\rho^*)$ dB and a delay of
+$(\rho^* - \rho_k)/c$.
 
 All of this needs four distances in each plane of rotation, which a tape measure provides (Figure 2):
 
-- the depth, from the rotation axis to the baffle;
-- the lateral offset, from the rotation axis to the reference axis (the line the microphone is on at 0°),
-  with its sign;
-- each driver's offset from the reference axis;
-- the microphone distance at 0°.
+- the depth $D$, from the rotation axis to the baffle;
+- the lateral offset $L$, from the rotation axis to the reference axis (the line the microphone is on at
+  0°), with its sign;
+- each driver's offset $s$ from the reference axis;
+- the microphone distance $r$ at 0°.
 
-A driver out of the plane the microphone turns in also has its distances counted in 3D. Standing for its
-horizontal orbit, the two-way has its woofer 205 mm below that plane; taking it as in the plane would cost
-only a few hundredths of a dB here.
+Put the rotation axis at the origin, with $x$ toward the side the microphone moves to at positive angles
+and $z$ toward the front, and write positions as $(x, z)$. The reference point is then at $(L, D)$, the
+driver at $S = (L + s, D)$, and the microphone starts at $(L, D + r)$. At the nominal angle $\theta$, the
+microphone was at $M$, its starting point turned by $\theta$ about the axis, when it should have been at
+$M^*$, at the same angle on a circle of radius $r$ around the reference point:
 
-The two measurements can be averaged as complex responses, magnitude and phase together, or as powers,
-the squared magnitudes, which ignore the phase. When the two measurements are in phase, both give almost
-the same result. When they are not, the complex average partly cancels and digs notches that neither
-measurement has. This happens behind the cabinet at high frequency, where the response changes faster
-with angle than a 10° step can follow. Averaging the powers avoids it. The cost is small: on the steep
-edge of a driver's main lobe, where the level changes quickly with angle, the power average reads slightly
-high. The correction here averages the powers and keeps the phase of the complex average (see "The
-Arithmetic" sidebar).
+$$M = \begin{pmatrix} L\cos\theta + (D + r)\sin\theta \\ -L\sin\theta + (D + r)\cos\theta \end{pmatrix}, \qquad M^* = \begin{pmatrix} L + r\sin\theta \\ D + r\cos\theta \end{pmatrix}$$
+
+Seen from the driver, a position $P$ lies at the distance $\rho$ and in the direction $\varphi$, its angle
+from the $z$ axis toward $x$:
+
+$$\rho = |P - S|, \qquad \varphi = \operatorname{atan2}(P_x - S_x,\ P_z - S_z)$$
+
+$M^*$ gives the ideal distance $\rho^*$ and direction $\varphi^*$, and the measurement taken at each angle
+its own $\rho_k$ and $\varphi_k$.
+
+A driver can also sit above or below the plane the microphone turns in. When the two-way stands upright for
+its horizontal orbit, the microphone is at the tweeter's height and the woofer 205 mm lower, so the woofer
+is a little farther from the microphone, at every angle, than the four distances alone would say. With its
+height $h$ above or below the plane, the correction takes $\rho = \sqrt{|P - S|^2 + h^2}$. Here it hardly
+matters: leaving the height out changes the results by only a few hundredths of a dB RMS.
+
+The two measurements whose directions $\varphi_a$ and $\varphi_b$ bracket the ideal one, $\varphi^*$, get
+the weights $1 - u$ and $u$, with $u = (\varphi^* - \varphi_a)/(\varphi_b - \varphi_a)$. They can be
+averaged as complex responses, magnitude and phase together, or as powers, the squared magnitudes, which
+ignore the phase. When the two measurements are in phase, both give almost the same result. When they are
+not, the complex average partly cancels and digs notches that neither measurement has. This happens behind
+the cabinet at high frequency, where the response changes faster with angle than a 10° step can follow.
+Averaging the powers avoids it. The cost is small: on the steep edge of a driver's main lobe, where the
+level changes quickly with angle, the power average reads slightly high. The correction here averages the
+powers and keeps the phase of the complex average:
+
+$$|H^*|^2 = (1-u)\,|H_a'|^2 + u\,|H_b'|^2, \qquad \arg H^* = \arg\left[(1-u)\,H_a' + u\,H_b'\right]$$
+
+The sidebar "A Worked Example" follows one direction through these steps.
 
 ## The Simulation
 
@@ -201,7 +230,7 @@ lateral offset is positive if the reference axis lies on that side.
 
 Measuring at 1 m and rebuilding the data as seen from 2 m is tempting. At 1 m the room's reflections arrive
 later relative to the direct sound, which leaves a longer usable window, and CTA-2034-A works at 2 m. The
-same correction can do it, with the ideal positions on a 2 m circle. The drivers beside the reference
+same correction can do it, with the ideal positions $M^*$ on a 2 m circle. The drivers beside the reference
 axis are then heard from the right angles. The woofer, 205 mm from the tweeter, is 11.6° off its own axis
 at 0° from 1 m, and 5.9° from 2 m.
 
@@ -235,24 +264,14 @@ The study's code and data, and a technical report with every formula, are on Git
 
 ---
 
-> **Sidebar: The Arithmetic**
+> **Sidebar: A Worked Example**
 >
-> A measurement taken at a distance $\rho$ from a driver is moved to the ideal distance $\rho'$ by a delay
-> and a gain:
->
-> $$\Delta t = \frac{\rho' - \rho}{c}, \qquad G = 20 \log_{10} \frac{\rho}{\rho'} \ \mathrm{dB}$$
->
-> Two measurements $a$ and $b$, moved to the same distance, are averaged with a weight $u$ that goes from 0
-> at the direction of $a$ to 1 at the direction of $b$. Their powers are averaged, and the phase is that of
-> the complex average:
->
-> $$|H|^2 = (1-u)\,|H_a|^2 + u\,|H_b|^2$$
->
-> An example, for the two-way lying on its side at 1 m (Figure 2): the measurement at a nominal 90° was
-> taken 1.059 m from the tweeter, which heard it at 104.5°. The tweeter's response at a true 90° is rebuilt
-> from the measurements taken at nominal 70° and 80°, which the tweeter heard at 82.4° and 93.6°. The 80°
-> one gets a weight of 0.68, the 70° one 0.32. Both are brought to 1 m: the 80° one is advanced by
-> 0.089 ms and raised by 0.26 dB, the 70° one advanced by 0.017 ms and raised by 0.05 dB.
+> The two-way lies on its side, the microphone at 1 m (Figure 2): $D$ = 145 mm, $L$ = +120 mm, $r$ = 1 m,
+> and $s$ = 0 for the tweeter. The measurement at a nominal 90° was taken at $M$ = (1145, −120) mm, 1.059 m
+> from the tweeter, which heard it at 104.5°. The tweeter's response at a true 90° is rebuilt from the
+> measurements taken at nominal 70° and 80°, which the tweeter heard at 82.4° and 93.6°. The 80° one gets
+> the weight $u$ = 0.68, the 70° one 0.32. Both are brought to 1 m: the 80° one is advanced by 0.089 ms and
+> raised by 0.26 dB, the 70° one advanced by 0.017 ms and raised by 0.05 dB.
 
 > **Sidebar: Checklist for a Small Turntable**
 >
