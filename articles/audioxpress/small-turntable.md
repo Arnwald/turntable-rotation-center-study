@@ -103,11 +103,13 @@ its own $\rho_k$ and $\varphi_k$.
 
 ![Figure 4: The two-way lying on its side, seen from above, with the symbols of the equations: the rotation axis at the origin of $x$ and $z$, the reference point $(L, D)$, a driver at $S$ (here the woofer, so $s$ is negative), and the microphone at the nominal angle $\theta$, where it was, $M$, and where it should have been, $M^*$. Seen from the driver, $M$ lies at the distance $\rho$ and the angle $\varphi$. The microphone distance $r$ is not to scale.](../figures/symbols-view.png){width=62%}
 
-A driver can also sit above or below the plane the microphone turns in. When the two-way stands upright for
-its horizontal orbit, the microphone is at the tweeter's height and the woofer 205 mm lower, so the woofer
-is a little farther from the microphone, at every angle, than the four distances alone would say. With its
-height $h$ above or below the plane, the correction takes $\rho = \sqrt{|P - S|^2 + h^2}$. Here it hardly
-matters: leaving the height out changes the results by only a few hundredths of a dB RMS.
+In the vertical orbit, with the two-way on its side, both drivers lie in the plane the microphone turns in.
+In the horizontal orbit they do not: with the two-way standing upright, the microphone is at the tweeter's
+height and the woofer 205 mm lower, so the woofer is a little farther from the microphone, at every angle,
+than the four distances alone would say. With a driver's height $h$ above or below the plane, the
+correction takes $\rho = \sqrt{|P - S|^2 + h^2}$. For this two-way, leaving the height out changes the
+results by only a few hundredths of a dB RMS. It could matter more for a driver farther from the plane
+relative to the microphone distance, or in asymmetric layouts, which this study did not simulate.
 
 The two measurements whose directions $\varphi_a$ and $\varphi_b$ bracket the ideal one, $\varphi^*$, get
 the weights $1 - u$ and $u$, with $u = (\varphi^* - \varphi_a)/(\varphi_b - \varphi_a)$. They can be
